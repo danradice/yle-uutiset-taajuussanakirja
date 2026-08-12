@@ -1,0 +1,330 @@
+Introduction
+The Korp corpus search interface of Kielipankki (The Language Bank of Finland) is accompanied with and based on a publicly accessible Web service. This service can be used to retrieve the data used for the Korp search interface by other programs and thus serves as an API for Korp. The Korp Web service also offers some features not currently available in the Korp search interface, such as pre-queries to limit the scope of the main query to structures (sentences, paragraphs or the like) also matching the pre-queries.
+
+This document describes the commands available in the Korp API, their parameters and return data content. This document is largely based on the Språkbanken’s (The Swedish Language Bank at the University of Gothenburg) Korp Web service documentation.
+
+Accessing the Web service
+The address for Kielipankki’s main Korp Web service is
+
+https://www.kielipankki.fi/korp/cgi-bin/korp/korp.cgi
+The Korp Web service is accessed using standard HTTP(S) GET requests, so the URLs for API calls are of the form
+
+https://www.kielipankki.fi/korp/cgi-bin/korp/korp.cgi?command=…&corpus=…&…
+Here, command is the Web service command to execute and corpus the list of corpora as the targets of the command. These parameters are required by most of the commands.
+
+The Web service returns data in JSON (JavaScript Object Notation) format, which shows up as text in the Web browser.
+
+In addition, the KWIC search results can be downloaded from Korp in various other formats using the download service at
+
+https://www.kielipankki.fi/korp/cgi-bin/korp/korp_download.cgi
+To get an idea as to how the results of a Korp search could be obtained via the API, you can open a network traffic monitor in your Web browser’s developer tools and see how the Korp search interface interacts with the API. Look for calls to korp.cgi or korp_download.cgi. You can copy their URLs to the browser address bar, modify them parameters and see the effect. (The parameter querydata often appears in the URL but it is not needed for the Web service.)
+
+Corpus Workbench
+Korp is based on the (IMS Open) Corpus Workbench (CWB) and uses its Corpus Query Protocol (CQP) as the query language. It may be helpful to know the basics of CQP for using the Korp Web service. Please note that the CQP queries in Korp are single query expressions: you cannot use the CQP commands for counting, sorting, naming results or setting options, for example.
+
+Corpus attributes
+Corpora in Korp (CWB) consist of tokens (words and punctuation marks). Each token has named positional attributes, at least a word form. In addition, sequences of tokens may be grouped by structural attributes that correspond roughly to XML elements and their attributes.
+
+The positional and structural attributes vary from corpus to corpus but some attributes are common to many corpora. Even if the attribute names are the same, it does not guarantee that the attribute value sets are the same.
+
+Common positional (token) attributes for corpora are:
+
+word: word form
+lemma: base form
+lemmacomp: base form with compound boundary marked
+pos: part of speech
+msd: morpho-syntactic description (morphological analysis)
+ref: the number of the token in the sentence (one-based)
+dephead: the number of the dependency head of the token
+deprel: dependency relation with dephead
+lex: a ”lemgram” for the word: lemma..pos.n
+The use of lemgrams originates from the Swedish corpus markup, where it serves as a sense identifier. For Finnish corpora, lemgrams are constructed artificially. They use a different (fixed) set of part-of-speech tags and the sense number n is always 1.
+
+Common structural attributes are text, paragraph and sentence, corresponding to divisions of the text. The attribute values associated with these structures are represented by the structural attributes struct_attr; for example, text_title for the title of a text and sentence_id for a sentence identifier.
+
+Almost all corpora have the structural attributes text_datefrom, text_dateto, text_timefrom and text_timeto, which correspond to the creation date and time of the text, represented in the format yyyymmdd and hhmmss, respectively. If the exact date is known, the values of text_datefrom and text_dateto are the same. If only the year is known, text_datefrom is yyyy0101 and text_datetoyyyy1231; if the year and month are known, text_datefrom is the first day of the month and text_dateto is the last one. If the time is known, text_datefrom and text_dateto are the same; otherwise text_datefrom is 000000 and text_dateto 235959. An unknown date is represented by an empty string in all these attributes.
+
+Conventions used in this document
+The parameters of Korp Web service commands are described below as
+follows:
+
+a = …: a is a required parameter
+[?] b = x: the optional parameter b takes value x
+[+] c = …: the parameter c takes multiple values separated with commas
+The above list would be represented as URL parameters as follows:
+
+?a=…&b=x&c=…,…
+The properties of the JSON objects returned by the Korp Web service are described so that the following JSON:
+
+{
+   "a": …,
+   name: {
+     "b": "y"
+     "c": …
+   }
+ }
+is described as follows:
+
+a: … (description)
+[+] name: name is a variable property name, typically the name (id) of a corpus
+b: y
+c: … (description)
+The [+] above for name indicates that the property may be repeated multiple times, obviously with different property names. If a value is an array of objects, it is mentioned explicitly.
+
+Common features of the commands
+All commands take the following optional parameters:
+
+[?] indent = num: Format the resulting JSON with indentation step num. The default is to return the JSON in a compact form, with no indentation or line breaks.
+[?] callback = string: Enclose the resulting JSON in string( … } (for some AJAX calls, for example).
+[?] cache = true: Use a cached result if available; if not, store the result in the Korp query cache for future queries.
+If a command causes an error, it returns JSON with property ERROR:
+
+ERROR
+type: The type of the error
+value: Error message
+All commands also return the real time (as opposed to CPU time) it used to take to execute the command:
+
+time: Run time in seconds
+Information commands
+General information
+Retrieve information about the available corpora and the CQP version used.
+
+Parameters:
+
+[?] command = info
+Returns:
+
+corpora: Comma-separated list of corpora available on the Korp server. The corpora are shown as upper-case corpus ids.
+protected_corpora: An array of the names (ids) of the corpora that are protected
+cqp-version: The CQP version used on the server
+Please note that trying to access protected corpora (corpora requiring authentication for access) via the Korp Web service results in an error.
+
+Example
+
+List the corpora available on Kielipankki’s Korp service:
+https://www.kielipankki.fi/korp/cgi-bin/korp/korp.cgi?command=info&indent=2
+Corpus information
+Retrieve information on one or more corpora and their attributes.
+
+Parameters:
+
+[?] command = info
+[+] corpus = List of upper-case corpus ids
+Returns:
+
+corpora
+[+] corpus: Information on the corpus corpus (corpus in uppercase)
+attrs
+p: Comma-separated list of positional (word) attributes in corpus corpusname
+s: Comma-separated list of structural (text) attributes in corpus corpusname. Attributes with a simple name without underscores designate structures and they have no particular values: for example, sentence for a sentence. Attributes with names of the form struct_attr containing underscores designate the attribute attr of the structure struct and they have values; for example, sentence_id for the identifier of a sentence.
+[?] a: Comma-separated list of alignment attributes (for parallel corpora)
+info
+Charset: Character encoding of the corpus
+Size: The number of tokens in the corpus
+Sentences: The number of sentences in the corpus
+Updated: The date of last update in ISO format yyyy–mm–dd
+total_size: The total number of tokens in the above corpora
+total_sentences: The total number of sentences in the above corpora
+Examples:
+
+List the attributes and other information on the National Library newspaper corpus, years 1830–1839 in Finnish:
+https://www.kielipankki.fi/korp/cgi-bin/korp/korp.cgi?command=info&corpus=KLK_FI_1830,KLK_FI_1831,KLK_FI_1832,KLK_FI_1833,KLK_FI_1834,KLK_FI_1835,KLK_FI_1836,KLK_FI_1837,KLK_FI_1838,KLK_FI_1839&indent=2
+List the attributes and other information on the Suomi24 internet discussion forum corpus:
+https://www.kielipankki.fi/korp/cgi-bin/korp/korp.cgi?command=info&corpus=S24&indent=2
+KWIC concordance
+Perform a KWIC concordance search for one or more corpora.
+
+Parameters:
+
+[?] command = query
+[+] corpus = Corpus id in uppercase
+cqp = CQP query expression
+[?] cqpn = (n is an integer) Additional CQP query expressions limiting the scope of the matches: the query results are only shown for structures (as specified with defaultwithin or within) that contain a match for all the queries. See below for more information.
+start = The number of the first hit to include in the concordance (starting from 0)
+end = The number of the last hit to include in the concordance
+[?] defaultcontext = n struct: The default context (n struct elements) to show around the match: typically 1 sentence or 1 paragraph to show only the containing sentence or paragraph. You can also use nwords to show n words around the match, disregarding structure boundaries.
+[?+] context = corpus:n struct: The context to show for corpus corpus instead of the default
+[?+] show = The positional attributes to show for tokens (from the list of attrs.p returned by the info for a corpus), and also the structures whose opening and closing is to be shown within tokens (from the list of attrs.s returned by the info for a corpus, typically structure names without an underscore)
+[?+] show_struct = The structural attributes to show (from the list of attrs.s returned by the info for a corpus)
+[?] cut = The maximum number of hits to search
+[?] defaultwithin = struct: Limit search witihin the structural attribute struct
+[?+] within = corpus:struct: Limit search in corpus corpus within struct instead of the structure given with defaultwithin
+[?] sort = Sort criterion for the search results within each corpus: one of keyword (the searched word), left (left context), right (right context) or random (random order)
+[?] random_seed = n: Use n as the seed for the random number generator, to get a reproducible random order with sort=random
+[?] incremental = true: Return results incrementally (as soon as the results for each corpus are ready) for a search from multiple corpora
+The word form is always shown in the concordance, even if show=word is not specified.
+
+The additional CQP query parameters cqpn can be used to simulate order-independent conjunction of search criteria: it does not matter in which order the matches for the separate CQP queries appear in the text structure. This contrasts with a single CQP query, which always specifies the order in which the matching tokens must appear in the text. Note that the result will only indicate match positions for the largest-numbered query (the number of the unnumbered parameter cqp is 0); the rest are considered pre-queries limiting the scope of the matches.
+
+Returns:
+
+hits: The total number of hits
+corpus_hits
+[+] corpus: Number of hits for corpus
+kwic: An array of KWIC rows with the following properties:
+corpus: Corpus name in uppercase
+match: Information on the match (of the main CQP query only):
+start: The start position (word) of the match on the KWIC row
+end: The end position (word) of the match on the KWIC row
+position: Global corpus position (token number from the beginning of the corpus) for the match
+tokens: An array of tokens on the KWIC row. Each token is an object, whose properties are the positional attributes specified in the parameter show (if they exist in the corpus in question). If structural attributes (structures) are specified in show, their opening and closing are shown in the property structs of the first and last token of the structure, respectively: the property structs.open lists all the structures opening before the token and structs.close the structures closing after the token.
+structs:
+[+] struct: The value of the structural attribute struct specified in the parameter show_struct for the first token of the matching row.
+[?] aligned: For parallel corpora only
+aligned_corpus: A list of aligned tokens in aligned_corpus.
+Examples:
+
+Return the first 25 sentences containing a word with the base form ”Suomi” with all attributes in the corpora KLK_FI_1839 to KLK_FI_1830 (in this order), sorted by the matched word (within each corpus):
+https://www.kielipankki.fi/korp/cgi-bin/korp/korp.cgi?command=query&defaultcontext=1+sentence&defaultwithin=sentence&show=sentence,paragraph,lemma,lemmacomp,pos,msd,dephead,deprel,ref,lex,ocr&show_struct=text_label,text_publ_title,text_publ_id,text_issue_date,text_issue_no,text_issue_title,text_elec_date,text_language,text_page_no,text_sentcount,text_tokencount,text_img_url,text_dateto,text_datefrom,text_publ_type,paragraph_id,sentence_id,sentence_parse_state,sentence_local_id,text_binding_id,text_page_image_url,text_page_image_context_url,text_download_pdf_url&start=0&end=24&corpus=KLK_FI_1839,KLK_FI_1838,KLK_FI_1837,KLK_FI_1836,KLK_FI_1835,KLK_FI_1834,KLK_FI_1833,KLK_FI_1832,KLK_FI_1831,KLK_FI_1830&cqp=%5Blemma+%3D+%22Suomi%22%5D&sort=keyword&indent=2
+Return the paragraphs 500–999 containing a word with the base form ”Suomi” (once for each hit), with only the word, base form and part of speech shown for each word, sorted by the left context (within each corpus):
+https://www.kielipankki.fi/korp/cgi-bin/korp/korp.cgi?command=query&defaultcontext=1+paragraph&defaultwithin=sentence&show=sentence,paragraph,lemma,pos&show_struct=text_label,text_publ_title,text_publ_id,text_issue_date,text_issue_no,text_issue_title,text_elec_date,text_language,text_page_no,text_sentcount,text_tokencount,text_img_url,text_dateto,text_datefrom,text_publ_type,paragraph_id,sentence_id,sentence_parse_state,sentence_local_id,text_binding_id,text_page_image_url,text_page_image_context_url,text_download_pdf_url&start=500&end=999&corpus=KLK_FI_1839,KLK_FI_1838,KLK_FI_1837,KLK_FI_1836,KLK_FI_1835,KLK_FI_1834,KLK_FI_1833,KLK_FI_1832,KLK_FI_1831,KLK_FI_1830&cqp=%5Blemma+%3D+%22Suomi%22%5D&sort=left&indent=2
+Return the first 25 sentences containing a word with the base form ”Suomi” with all attributes in the corpus S24 (Suomi24), sorted by the matched word:
+https://www.kielipankki.fi/korp/cgi-bin/korp/korp.cgi?command=query&defaultcontext=1+sentence&defaultwithin=sentence&show=sentence,paragraph,lemma,pos,msd,dephead,deprel,ref,lex,nertag&show_struct=text_title,text_date,text_time,text_sect,text_sub,text_user,sentence_id,text_urlmsg,text_urlboard&start=0&end=24&corpus=S24&cqp=%5Blemma+%3D+%22Suomi%22%5D&indent=2
+Return the first 10 texts (discussion thread comments) containing a word with the base form ”Suomi” and a word with the base form ”Ruotsi” (”Ruotsi” is not marked as a match), with only the word and base form shown for tokens (but all structural attributes) in the corpus S24, sorted by the matched word:
+https://www.kielipankki.fi/korp/cgi-bin/korp/korp.cgi?command=query&defaultcontext=1+text&defaultwithin=text&show=sentence,paragraph,lemma&show_struct=text_title,text_date,text_time,text_sect,text_sub,text_user,sentence_id,text_urlmsg,text_urlboard&start=0&end=9&corpus=S24&cqp=%5Blemma+%3D+%22Ruotsi%22%5D&cqp1=%5Blemma+%3D+%22Suomi%22%5D&indent=2
+Statistics
+Frequency information
+Count the absolute and relative frequency of one or more attribute for
+a CQP query.
+
+Parameters:
+
+command = count (or count_all for counting statistics for all tokens)
+cqp = CQP query expression (not applicable to count_all)
+[?] cqpn = Additional CQP query expressions (n is an integer); see the description above for KWIC concordance (not applicable to count_all)
+[+] groupby = Positional and/or structural attributes according to which to group the results
+[+] corpus = Corpus names in uppercase
+[?] defaultwithin = struct: Limit search witihin the structural attribute struct
+[?+] within = corpus:struct: Limit search in corpus corpus within struct instead of the structure given with defaultwithin
+[?+] ignore_case = Attributes for which case is ignored
+[?] start = The number of the first row (gropuby attribute value) to return
+[?] end = The number of the last row to return
+[?] incremental = true: Return results incrementally (as soon as the results for each corpus are ready) for a search from multiple corpora
+You should use the command count_all for counting statistics for all the tokens in one or more corpora: it is optimized and much faster in this task than count. count_all takes the same arguments as count, except for cqp (and cqpn).
+
+Returns:
+
+corpora:
+[+] corpus: The frequencies for corpus
+absolute: Absolute frequencies
+[+] attribute1/attribute2/…: Absolute frequency for the given combination of values of the attributes specified in the groupby parameter
+relative: Relative frequencies
+[+] attribute1/attribute2/…: Relative frequency for the given combination of attribute values
+sums: Sums of all the attribute values for the corpus
+absolute: Sum of absolute frequencies
+relative: Sum of relative frequencies
+total: The total frequencies for all corpora in the same format as above for individual corpora
+count: The total number of different values
+Examples:
+
+Count the frequencies of dependency relations for the words with the base form ”Suomi” in the corpora KLK_FI_1839 to KLK_FI_1830:
+https://www.kielipankki.fi/korp/cgi-bin/korp/korp.cgi?command=count&groupby=deprel&cqp=%5Blemma+%3D+%22Suomi%22%5D&corpus=KLK_FI_1839,KLK_FI_1838,KLK_FI_1837,KLK_FI_1836,KLK_FI_1835,KLK_FI_1834,KLK_FI_1833,KLK_FI_1832,KLK_FI_1831,KLK_FI_1830&defaultwithin=sentence&indent=2
+Count the frequencies of dependency relations for the words with the base form ”Suomi” in the corpus S24:
+https://www.kielipankki.fi/korp/cgi-bin/korp/korp.cgi?command=count&groupby=deprel&cqp=%5Blemma+%3D+%22Suomi%22%5D&corpus=S24&defaultwithin=sentence&indent=2
+Trend diagram
+Get the frequencies of one or more expression over time.
+
+Parameters:
+
+command = count_time
+cqp = CQP query expression
+[?] subcqpn = Subquery of the CQP query above; n is a number; see below for further information.
+[+] corpus = Corpus names in uppercase
+[?] granularity = Temporal granularity of the result: y (year; the default), m (month) or d (day)
+[?] incremental = true: Return results incrementally (as soon as the results for each corpus are ready) for a search from multiple corpora
+If one or more subcqpn is specified, return the frequency information also for these queries.
+
+The result is returned both by corpus and total for all corpora.
+
+Returns:
+
+corpora:
+[+] corpus: The frequencies for corpus: an array of objects, one for the main CQP query and each subquery
+[?] cqp: The sub-CQP query in question (not returned for the main query)
+absolute:
+[+] date: Absolute frequency for date
+relative:
+[+] date: Relative frequency for date
+sums:
+absolute: Sum of absolute frequencies
+relative: Sum of relative frequencies
+combined: The combined frequencies for all the corpora in corpora in the above format
+Examples:
+
+Get the trend information for words with with the base form ”Suomi” in the corpora KLK_FI_1839 to KLK_FI_1830:
+https://www.kielipankki.fi/korp/cgi-bin/korp/korp.cgi?command=count_time&cqp=%5Blemma+%3D+%22Suomi%22%5D&corpus=KLK_FI_1839,KLK_FI_1838,KLK_FI_1837,KLK_FI_1836,KLK_FI_1835,KLK_FI_1834,KLK_FI_1833,KLK_FI_1832,KLK_FI_1831,KLK_FI_1830&indent=2
+Get the trend information for words with with the base form ”Suomi” in the corpus S24 by the month:
+https://www.kielipankki.fi/korp/cgi-bin/korp/korp.cgi?command=count_time&cqp=%5Blemma+%3D+%22Suomi%22%5D&corpus=S24&granularity=m&indent=2
+Log-likelihood comparison
+Compare the search results of two sets of corpora using log-likelihood.
+
+Parameters:
+
+command = loglike
+set1_cqp = CQP query expression for set 1
+set2_cqp = CQP query expression for set 2
+[+] groupby = Positional and/or structural attributes according to whose values to group the results
+[+] set1_corpus = Corpus names in uppercase for set 1
+[+] set2_corpus = Corpus names in uppercase for set 2
+[?] max = The maximum number of results
+[?] incremental = true: Return results incrementally (as soon as the results for each corpus are ready) for a search from multiple corpora
+The command may be used to compare two different queries (or the same query) on two different sets of corpora (or the same set) as long as both sets of corpora have the attributes listed in the groupby parameter.
+
+Returns:
+
+average: average value for log-likelihood
+loglike
+[+] value: Log-likelihood for the value of the groupby attributes.
+set1
+[+] value: Absolute frequency of value in set 1
+set2
+[+] value: Absolute frequency of value in set 2
+If the parameter groupby contains more than one attribute name, the values above have them separated by slashes (value1/value2/…).
+
+Examples:
+
+Compare the occurrences of the words (base forms) ”nainen” and ”mies” in the S24 corpus by the main category:
+https://www.kielipankki.fi/korp/cgi-bin/korp/korp.cgi?command=loglike&set1_corpus=S24&set1_cqp=%5Blemma+%3D+%22nainen%22%5D&set2_corpus=S24&set2_cqp=%5Blemma+%3D+%22mies%22%5D&groupby=text_sect&indent=2
+Compare the base forms beginning with ”tasa” in the S24 corpus and the KLK_FI_1990 to KLK_FI_2000 corpora:
+https://www.kielipankki.fi/korp/cgi-bin/korp/korp.cgi?command=loglike&groupby=lemma&max=50&set1_corpus=S24&set1_cqp=%5Blemma+%3D+%22tasa.*%22%5D&set2_corpus=KLK_FI_2000,KLK_FI_1999,KLK_FI_1998,KLK_FI_1997,KLK_FI_1996,KLK_FI_1995,KLK_FI_1994,KLK_FI_1993,KLK_FI_1992,KLK_FI_1991,KLK_FI_1990&set2_cqp=%5Blemma+%3D+%22tasa.*%22%5D&indent=2
+Word picture
+Word picture table
+Retrieve the most frequent dependency relations in which a lemgram or word form occurs.
+
+Parameters:
+
+command = relations
+[+] corpus = Corpus name in uppercase
+word = The lemgram or word form to search
+[?] type = Search type: word (word form; the default) or lemgram
+[?] min = Minimum frequency to be shown
+[?] max = The maximum number of results (0 = no limit)
+[?] incremental: Return information incrementally as the computing is ready for each individual corpus
+Returns:
+
+relations: An array of relations with the following properties:
+source: List of sources, which are strings of the form CORPUS:id, where CORPUS is a corpus id and id an internal relation id; to be used as an input parameter to the command relations_sentences
+dep: Dependent lemgram (or word form)
+depextra: Dependent prefix (not used in Finnish corpora)
+deppos: Dependent part of speech (mapped to the SUC2 tagset)
+freq: Number of occurrences
+head: Head lemgram (or word form)
+headpos: Head part of speech (mapped to the SUC2 tagset)
+mi: Lexicographer’s mutual information value
+rel: Dependency relation (mapped to the Swedish treebank dependency labels)
+Word picture hits
+Retrieve the sentences in which a dependency relation occurs. The dependency relation is often from the word picture.
+
+Parameters:
+
+command = relations_sentences
+[+] source = Strings of the form CORPUS:id, where CORPUS is a corpus id and id an internal relation id, as returned in the source value by the command relations
+head = The lemgram of the head word
+rel = Dependency relation
+[?] dep = Dependent lemgram
+[?] depextra = Dependent prefix (not used in Finnish corpora
+[?] start = The number of the first hit to include in the concordance (starting from 0)
+[?] end = The number of the last hit to include in the concordance
+Returns:
+
+The command returns a structure of the same type as the basic KWIC concordance returned by query.

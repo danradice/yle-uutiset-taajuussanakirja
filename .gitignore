@@ -1,0 +1,6 @@
+# Downloaded YLENEWS_FI VRT corpora (~27 GB) — obtain from Kielipankki, see README
+corpora/
+
+# Python
+__pycache__/
+*.py[cod]
