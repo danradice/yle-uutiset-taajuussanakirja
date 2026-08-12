@@ -168,4 +168,5 @@ attribute:
 > Kielipankki) and the Kotus Nykysuomen sanalista (CC BY).
 
 Both upstream sources are themselves CC BY and require attribution in their own
-right — see [LICENSE](LICENSE) for the full details.
+right. [NOTICE](NOTICE) records exactly what is covered and who must be credited;
+[LICENSE](LICENSE) is the full CC BY 4.0 text.
