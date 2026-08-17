@@ -17,7 +17,7 @@ by frequency descending then headword. The output is tab-separated, with columns
 
 POS is deliberately not used to split counts: the sanalista already fixes each
 lemma's word class(es), and trusting the corpus tagger only fragments a lemma's
-counts across spurious classes (e.g. bogus "Foreign" tags). See NOTES.md.
+counts across spurious classes (e.g. bogus "Foreign" tags).
 
 YLENEWS VRT columns are: word, ref, lemma, lemmacomp, pos, msd, dephead,
 deprel, lex - note lemma is field index 2 and pos is index 4 (not 3, that's
