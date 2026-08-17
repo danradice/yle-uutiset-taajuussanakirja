@@ -12,7 +12,7 @@ total has been disambiguated by hand into per-POS counts in
 
 This script folds those back in: each such lemma's single merged row is replaced
 by one row per POS listed for it, carrying that POS's count, and writes the final
-frequency_dicts/taajuussanasto_ylenews_2011_2024.tsv.
+frequency_dicts/taajuussanakirja_ylenews_2011_2024.tsv.
 
 The ready file uses VRT pos codes (N, V, A, ...) while the frequency list's
 Sanaluokat column uses the sanalista's Finnish word-class names. Each code is
@@ -36,7 +36,7 @@ ROOT = Path(__file__).resolve().parent.parent
 WORDLIST = ROOT / "word_lists/nykysuomensanalista2024.txt"
 MERGED = ROOT / "auxiliary_data/lemma_counts_merged_2011_2024.tsv"
 READY = ROOT / "auxiliary_data/homonym_pos_counts_2011_2024_ready.tsv"
-OUTPUT = ROOT / "frequency_dicts/taajuussanasto_ylenews_2011_2024.tsv"
+OUTPUT = ROOT / "frequency_dicts/taajuussanakirja_ylenews_2011_2024.tsv"
 
 SANALUOKKA_TO_POS = {
     "substantiivi": {"N"},

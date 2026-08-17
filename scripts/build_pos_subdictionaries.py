@@ -1,6 +1,6 @@
 """Split the frequency dictionary into one subdictionary per word class.
 
-Reads the final frequency_dicts/taajuussanasto_ylenews_2011_2024.tsv and writes
+Reads the final frequency_dicts/taajuussanakirja_ylenews_2011_2024.tsv and writes
 one tab-separated file per word class to frequency_dicts/subdictionaries/,
 each keeping the dictionary's three columns and its frequency-descending order.
 
@@ -18,7 +18,7 @@ grouping but preserved in the output.
 
 Rows with a blank `Sanaluokat` belong to no class; the sanalista lists these
 forms without a word class (`enempää`, `osin`, `vuonna`, ...). They go to
-`taajuussanasto_luokittelematon.tsv` so no dictionary row is lost.
+`taajuussanakirja_luokittelematon.tsv` so no dictionary row is lost.
 """
 
 import csv
@@ -26,7 +26,7 @@ from collections import defaultdict
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-DICTIONARY = ROOT / "frequency_dicts/taajuussanasto_ylenews_2011_2024.tsv"
+DICTIONARY = ROOT / "frequency_dicts/taajuussanakirja_ylenews_2011_2024.tsv"
 OUTDIR = ROOT / "frequency_dicts/subdictionaries"
 
 
@@ -68,7 +68,7 @@ def main():
     OUTDIR.mkdir(parents=True, exist_ok=True)
     for cls, cls_rows in sorted(by_class.items(), key=lambda kv: -len(kv[1])):
         cls_rows.sort(key=lambda r: (-r[2], r[0]))  # frequency desc, then headword
-        path = OUTDIR / f"taajuussanasto_{filename_slug(cls)}.tsv"
+        path = OUTDIR / f"taajuussanakirja_{filename_slug(cls)}.tsv"
         with open(path, "w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f, delimiter="\t")
             writer.writerow(header)
@@ -77,7 +77,7 @@ def main():
 
     if unassigned:
         unassigned.sort(key=lambda r: (-r[2], r[0]))
-        path = OUTDIR / "taajuussanasto_luokittelematon.tsv"
+        path = OUTDIR / "taajuussanakirja_luokittelematon.tsv"
         with open(path, "w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f, delimiter="\t")
             writer.writerow(header)

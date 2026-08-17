@@ -53,7 +53,7 @@ resolved lemmas dropped) to yield
 
 Folds the reviewed per-POS counts back in: each affected lemma's single merged
 row is replaced by one row per POS, carrying that POS's count. Writes the final
-**tab-separated** `frequency_dicts/taajuussanasto_ylenews_2011_2024.tsv` (same
+**tab-separated** `frequency_dicts/taajuussanakirja_ylenews_2011_2024.tsv` (same
 three columns as stage 1). The ready file's VRT pos codes are mapped back to the
 sanalista's Finnish class names, choosing among *that lemma's own* classes —
 which resolves `Num` (numeraali vs. järjestysluku) and `Adp` (postpositio vs.
@@ -80,7 +80,7 @@ carried over so any row shows whether its count is shared.
 
 Rows whose `Sanaluokat` is blank (forms the sanalista lists without a word
 class: `enempää`, `osin`, `vuonna`, ...) go to
-`taajuussanasto_luokittelematon.tsv`, so no dictionary row is lost.
+`taajuussanakirja_luokittelematon.tsv`, so no dictionary row is lost.
 
 ### Commands
 
@@ -98,10 +98,10 @@ root via `ROOT = Path(__file__).resolve().parent.parent`, not the CWD.
 
 - `word_lists/nykysuomensanalista2024.txt` — **tab-separated**, columns
   `Hakusana` (headword/lemma), `Homonymia`, `Sanaluokka`, `Taivutustiedot`.
-- `frequency_dicts/taajuussanasto_ylenews_2011_2024.tsv` — the **deliverable**,
+- `frequency_dicts/taajuussanakirja_ylenews_2011_2024.tsv` — the **deliverable**,
   tab-separated; written by stage 2.
-- `frequency_dicts/subdictionaries/taajuussanasto_<sanaluokka>.tsv` — one file
-  per word class, written by stage 3, plus `taajuussanasto_luokittelematon.tsv`
+- `frequency_dicts/subdictionaries/taajuussanakirja_<sanaluokka>.tsv` — one file
+  per word class, written by stage 3, plus `taajuussanakirja_luokittelematon.tsv`
   for rows with a blank `Sanaluokat`. These overlap: see stage 3 above before
   aggregating anything across them.
 - `auxiliary_data/` — intermediates and working files, all tab-separated:

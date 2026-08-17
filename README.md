@@ -1,10 +1,10 @@
-# Taajuussanasto — a Finnish frequency dictionary
+# Yle Uutisten taajuussanakirja — a news-based Finnish frequency dictionary
 
 Corpus frequencies for the headwords of the Kotus *nykysuomen sanalista*,
 counted against the **Yle Finnish News Archive (YLENEWS_FI) 2011–2024**.
 
 The deliverable is
-[`frequency_dicts/taajuussanasto_ylenews_2011_2024.tsv`](frequency_dicts/taajuussanasto_ylenews_2011_2024.tsv):
+[`frequency_dicts/taajuussanakirja_ylenews_2011_2024.tsv`](frequency_dicts/taajuussanakirja_ylenews_2011_2024.tsv):
 **87 870 attested headwords**, tab-separated, sorted by frequency descending
 then headword. Headwords with zero corpus occurrences are dropped (the sanalista
 lists 104 742 in total).
@@ -49,14 +49,14 @@ same data split into one file per word class, same three columns, same ordering.
 
 | File | Rows | | File | Rows |
 |---|---:|---|---|---:|
-| `taajuussanasto_substantiivi.tsv` | 65 415 | | `taajuussanasto_pronomini.tsv` | 62 |
-| `taajuussanasto_adjektiivi.tsv` | 9 526 | | `taajuussanasto_prepositio.tsv` | 53 |
-| `taajuussanasto_verbi.tsv` | 9 169 | | `taajuussanasto_konjunktio.tsv` | 34 |
-| `taajuussanasto_adverbi.tsv` | 4 413 | | `taajuussanasto_luokittelematon.tsv` | 15 |
-| `taajuussanasto_postpositio.tsv` | 293 | | `taajuussanasto_kieltoverbi.tsv` | 12 |
-| `taajuussanasto_interjektio.tsv` | 168 | | `taajuussanasto_alistuskonjunktio.tsv` | 6 |
-| `taajuussanasto_numeraali.tsv` | 131 | | `taajuussanasto_rinnastuskonjunktio.tsv` | 2 |
-| | | | `taajuussanasto_jarjestysluku.tsv` | 1 |
+| `taajuussanakirja_substantiivi.tsv` | 65 415 | | `taajuussanakirja_pronomini.tsv` | 62 |
+| `taajuussanakirja_adjektiivi.tsv` | 9 526 | | `taajuussanakirja_prepositio.tsv` | 53 |
+| `taajuussanakirja_verbi.tsv` | 9 169 | | `taajuussanakirja_konjunktio.tsv` | 34 |
+| `taajuussanakirja_adverbi.tsv` | 4 413 | | `taajuussanakirja_luokittelematon.tsv` | 15 |
+| `taajuussanakirja_postpositio.tsv` | 293 | | `taajuussanakirja_kieltoverbi.tsv` | 12 |
+| `taajuussanakirja_interjektio.tsv` | 168 | | `taajuussanakirja_alistuskonjunktio.tsv` | 6 |
+| `taajuussanakirja_numeraali.tsv` | 131 | | `taajuussanakirja_rinnastuskonjunktio.tsv` | 2 |
+| | | | `taajuussanakirja_jarjestysluku.tsv` | 1 |
 
 > [!WARNING]
 > **These files overlap. Never sum counts across them.**
@@ -71,7 +71,7 @@ same data split into one file per word class, same three columns, same ordering.
 > a given count is shared: more than one class listed means it is.
 
 Rows whose `Sanaluokat` is blank (`enempää`, `osin`, `vuonna`, …) land in
-`taajuussanasto_luokittelematon.tsv`, so no dictionary row is lost.
+`taajuussanakirja_luokittelematon.tsv`, so no dictionary row is lost.
 
 ## Rebuilding
 
@@ -163,9 +163,10 @@ and the resulting decisions in
 [CC BY 4.0](LICENSE). If you use a frequency dictionary from this repo, please
 attribute:
 
-> Taajuussanasto (Finnish frequency dictionary), Daniel Radice, CC BY 4.0.
-> Derived from the Yle Finnish News Archive 2011–2024 (© Yle, CC BY 4.0, via
-> Kielipankki) and the Kotus Nykysuomen sanalista (CC BY).
+> Yle Uutisten taajuussanakirja — a news-based Finnish frequency dictionary,
+> Daniel Radice, CC BY 4.0. Derived from the Yle Finnish News Archive
+> 2011–2024 (© Yle, CC BY 4.0, via Kielipankki) and the Kotus Nykysuomen
+> sanalista (CC BY).
 
 Both upstream sources are themselves CC BY and require attribution in their own
 right. [NOTICE](NOTICE) records exactly what is covered and who must be credited;
