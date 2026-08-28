@@ -1,0 +1,55 @@
+name: release
+
+# Tagging vX.Y.Z publishes a release. workflow_dispatch runs everything except
+# the publish step and uploads the assets as run artifacts, so the packaging can
+# be exercised without spending a tag.
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write   # gh release create needs it; nothing else does
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # Stages 2 and 3 need no corpora and take seconds, so a release can always
+      # afford to prove that the committed dictionary is the one the committed
+      # intermediates produce. If it is not, nothing gets published.
+      - name: Rebuild the dictionary from the committed intermediates
+        run: |
+          python3 scripts/split_homonym_counts.py
+          python3 scripts/build_pos_subdictionaries.py
+
+      - name: Fail if the committed dictionary is not reproducible
+        run: git diff --exit-code -- frequency_dicts/
+
+      - name: Build release assets
+        run: python3 scripts/build_release_assets.py
+
+      - name: Upload assets as artifacts (dry run)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-assets
+          path: dist/
+
+      - name: Publish the release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --title "Yle Uutisten taajuussanakirja $GITHUB_REF_NAME" \
+            --notes-file dist/RELEASE_NOTES.md \
+            --verify-tag \
+            dist/*.zip dist/*.tar.gz dist/SHA256SUMS.txt

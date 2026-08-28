@@ -1,5 +1,8 @@
 # Yle Uutisten taajuussanakirja — a news-based Finnish frequency dictionary
 
+[![Latest release](https://img.shields.io/github/v/release/danradice/yle-uutiset-taajuussanakirja)](https://github.com/danradice/yle-uutiset-taajuussanakirja/releases/latest)
+[![License: CC BY 4.0](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg)](LICENSE)
+
 Corpus frequencies for the headwords of the Kotus *nykysuomen sanalista*,
 counted against the **Yle Finnish News Archive (YLENEWS_FI) 2011–2024**.
 
@@ -17,6 +20,28 @@ se	pronomini	3740116
 ei	kieltoverbi, substantiivi	3312474
 että	konjunktio	2616520
 ```
+
+## Download
+
+Grab the [latest release](https://github.com/danradice/yle-uutiset-taajuussanakirja/releases/latest)
+— you only need to clone this repo if you want to rebuild the dictionary.
+
+Both archives (`.zip` and `.tar.gz`) unpack to the same tree:
+
+| File | Contents |
+|---|---|
+| `taajuussanakirja_ylenews_2011_2024.tsv` | The dictionary, exactly as committed here. |
+| `taajuussanakirja_ylenews_2011_2024.csv` | The same rows as CSV, UTF-8 **with BOM** so Excel reads `ä`/`ö` correctly. |
+| `taajuussanakirja_ylenews_2011_2024.json` | The same rows as an array of objects. |
+| `taajuussanakirja_top5000.tsv` | The 5 000 most frequent rows. |
+| `subdictionaries/` | All 15 word-class files. |
+| `README.md`, `LICENSE`, `NOTICE`, `CITATION.cff` | Docs, licence, attribution, citation metadata. |
+
+`SHA256SUMS.txt` is attached alongside them; verify with `sha256sum -c SHA256SUMS.txt`.
+
+The CSV, JSON and top-5000 files are generated at release time rather than
+committed, so the repository holds exactly one copy of the data and the
+alternative formats cannot drift out of sync with it.
 
 ### Columns
 
@@ -158,10 +183,39 @@ The evidence is in
 and the resulting decisions in
 [`auxiliary_data/homonym_processing_notes.md`](auxiliary_data/homonym_processing_notes.md).
 
+## Releases and versioning
+
+Tagged releases are published from
+[`CHANGELOG.md`](CHANGELOG.md) by
+[`.github/workflows/release.yml`](.github/workflows/release.yml): pushing a
+`vX.Y.Z` tag rebuilds the dictionary from the committed intermediates, fails if
+the result differs from what is committed, packages the archives, and creates
+the release with that version's changelog section as its notes.
+
+Versions are semantic, read for a dataset:
+
+| Bump | Means |
+|---|---|
+| **MAJOR** | A different corpus span, or a change to how counts are produced. |
+| **MINOR** | Added data: more headwords, an extra column, further subdictionaries. |
+| **PATCH** | Corrections that leave method and coverage intact. |
+
+To cut a release: add the section to `CHANGELOG.md`, bump `version` and
+`date-released` in [`CITATION.cff`](CITATION.cff), then tag. Running the
+workflow via **workflow_dispatch** first builds the same assets and uploads them
+as run artifacts, without spending a tag.
+
+Assets can also be built locally:
+
+```bash
+python3 scripts/build_release_assets.py --version 1.0.0   # writes dist/
+```
+
 ## License
 
 [CC BY 4.0](LICENSE). If you use a frequency dictionary from this repo, please
-attribute:
+attribute — [`CITATION.cff`](CITATION.cff) carries the same details in
+machine-readable form, and GitHub's "Cite this repository" button renders it:
 
 > Yle Uutisten taajuussanakirja — a news-based Finnish frequency dictionary,
 > Daniel Radice, CC BY 4.0. Derived from the Yle Finnish News Archive
