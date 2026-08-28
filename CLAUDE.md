@@ -82,6 +82,37 @@ Rows whose `Sanaluokat` is blank (forms the sanalista lists without a word
 class: `enempää`, `osin`, `vuonna`, ...) go to
 `taajuussanakirja_luokittelematon.tsv`, so no dictionary row is lost.
 
+### Releases — `build_release_assets.py`
+
+Packaging only; never a recount. Reads the finished dictionary and the
+subdictionaries and writes `dist/` (gitignored, wiped each run): a `.zip` and a
+`.tar.gz` of the same tree, `SHA256SUMS.txt` over both, and `RELEASE_NOTES.md`
+sliced out of `CHANGELOG.md`.
+
+The archives carry the dictionary, the 15 subdictionaries, `LICENSE`, `NOTICE`
+and `CITATION.cff` verbatim, a generated bundle `README.md` with absolute links,
+and three formats derived at build time — CSV (UTF-8 **with BOM**, for Excel),
+JSON, and a top-5000 head. Those three are deliberately **not** committed, so
+the repo holds one copy of the data and the alternative formats cannot drift.
+All formats keep the dictionary's three columns; no `rank` is added, since the
+homonym split puts some lemmas on two rows and ties in `count` leave rank
+ambiguous.
+
+The version comes from `--version`, else `$GITHUB_REF_NAME` with a leading `v`
+stripped, else `dev`. The script exits non-zero if `CHANGELOG.md` has no section
+for the version — the guard against tagging a release nobody wrote notes for.
+
+`.github/workflows/release.yml` runs on a `v*` tag: it reruns stages 2 and 3 and
+fails on `git diff --exit-code -- frequency_dicts/`, so a release cannot ship a
+dictionary that the committed intermediates do not reproduce. Then it builds the
+assets and publishes with `gh release create`. `workflow_dispatch` runs the same
+steps but uploads the assets as run artifacts instead of releasing.
+
+To cut a release: add the `## [X.Y.Z]` section to `CHANGELOG.md`, bump `version`
+and `date-released` in `CITATION.cff`, then push the tag. Versions are semver
+read for a dataset — MAJOR for a different corpus span or counting method, MINOR
+for added data or columns, PATCH for corrections.
+
 ### Commands
 
 ```bash
@@ -89,6 +120,7 @@ python3 scripts/count_local_vrt.py            # stage 1 (slow; reads all VRT fil
 python3 scripts/count_homonym_pos.py          # homonym per-POS counts (slow; feeds the manual step)
 python3 scripts/split_homonym_counts.py       # stage 2 — builds the final dictionary (fast)
 python3 scripts/build_pos_subdictionaries.py  # stage 3 — per-word-class subdictionaries (fast)
+python3 scripts/build_release_assets.py       # release archives into dist/ (fast)
 ```
 
 Scripts can be run from any directory: all data paths are anchored to the repo
@@ -104,6 +136,8 @@ root via `ROOT = Path(__file__).resolve().parent.parent`, not the CWD.
   per word class, written by stage 3, plus `taajuussanakirja_luokittelematon.tsv`
   for rows with a blank `Sanaluokat`. These overlap: see stage 3 above before
   aggregating anything across them.
+- `dist/` — release archives built by `build_release_assets.py`; gitignored
+  and rebuilt from scratch on every run, never edited by hand.
 - `auxiliary_data/` — intermediates and working files, all tab-separated:
   - `lemma_counts_merged_2011_2024.tsv` — stage 1 output (POS merged).
   - `homonym_pos_counts_2011_2024_raw.tsv` — `count_homonym_pos.py` output.

@@ -1,0 +1,61 @@
+cff-version: 1.2.0
+title: >-
+  Yle Uutisten taajuussanakirja — a news-based Finnish frequency
+  dictionary
+message: >-
+  If you use this dictionary, please cite it using the metadata
+  in this file.
+type: dataset
+authors:
+  - given-names: Daniel
+    family-names: Radice
+    email: daniel.radice@helsinki.fi
+repository-code: 'https://github.com/danradice/yle-uutiset-taajuussanakirja'
+abstract: >-
+  Corpus frequencies for the headwords of the Kotus nykysuomen
+  sanalista, counted against the Yle Finnish News Archive
+  (YLENEWS_FI) 2011-2024. 87 870 attested headwords with their
+  sanalista word classes and total corpus occurrences, plus
+  per-word-class subdictionaries. Counts are POS-merged because
+  the corpus tagger is not reliable enough to split them; the
+  43 homonyms whose senses are genuinely different parts of
+  speech were disambiguated by hand.
+keywords:
+  - Finnish
+  - frequency dictionary
+  - taajuussanasto
+  - corpus linguistics
+  - lexicography
+  - Yle
+  - YLENEWS_FI
+  - nykysuomen sanalista
+  - Kielipankki
+license: CC-BY-4.0
+version: 1.0.0
+date-released: '2026-08-28'
+references:
+  - type: database
+    title: 'Yle Finnish News Archive 2011-2024, scrambled, VRT'
+    authors:
+      - name: Yle (Yleisradio Oy / the Finnish Broadcasting Company)
+    license: CC-BY-4.0
+    notes: >-
+      Distributed by FIN-CLARIN / The Language Bank of Finland
+      (Kielipankki). Source of the "count" column. Three packages:
+      2011-2018 (urn:nbn:fi:lb-2020021107), 2019-2021
+      (urn:nbn:fi:lb-2022082503), 2022-2024
+      (urn:nbn:fi:lb-2025110405).
+    url: 'http://urn.fi/urn:nbn:fi:lb-2020021107'
+  - type: data
+    title: Nykysuomen sanalista
+    authors:
+      - name: >-
+          Kotimaisten kielten keskus (Institute for the Languages
+          of Finland)
+    license: CC-BY-4.0
+    notes: >-
+      Source of the "Hakusana" and "Sanaluokat" columns, and
+      redistributed unmodified as
+      word_lists/nykysuomensanalista2024.txt.
+    url: >-
+      https://kotus.fi/sanakirjat/kielitoimiston-sanakirja/nykysuomen-sana-aineistot/nykysuomen-sanalista/

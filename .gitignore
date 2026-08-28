@@ -4,3 +4,6 @@ corpora/
 # Python
 __pycache__/
 *.py[cod]
+
+# Release archives built by scripts/build_release_assets.py
+dist/
