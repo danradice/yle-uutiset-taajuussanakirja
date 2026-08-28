@@ -27,8 +27,10 @@ Usage:
 
     python3 scripts/build_release_assets.py [--version 1.0.0]
 
-The version defaults to $GITHUB_REF_NAME with a leading "v" stripped (so a
-tag push needs no argument), and to "dev" outside CI.
+With no argument the version comes from the tag being built
+($GITHUB_REF_NAME with a leading "v" stripped, only when $GITHUB_REF_TYPE is
+"tag"), and is "dev" otherwise -- on a branch, and outside CI. A "dev" build
+skips the changelog lookup; every other version requires its section.
 """
 
 import argparse
@@ -208,8 +210,17 @@ def sha256(path):
 
 
 def default_version():
-    ref = os.environ.get("GITHUB_REF_NAME", "")
-    return ref[1:] if ref.startswith("v") else (ref or "dev")
+    """The version to package when --version is not given.
+
+    Only a *tag* ref names a version. On workflow_dispatch GITHUB_REF_NAME is
+    the branch the run was started from ("main"), which is not a version and
+    must not be treated as one -- hence the GITHUB_REF_TYPE check rather than
+    just testing whether the variable is set.
+    """
+    if os.environ.get("GITHUB_REF_TYPE") == "tag":
+        ref = os.environ.get("GITHUB_REF_NAME", "")
+        return ref[1:] if ref.startswith("v") else ref
+    return "dev"
 
 
 def main():
@@ -222,7 +233,9 @@ def main():
     version = parser.parse_args().version
 
     header, rows = read_dictionary()
-    notes = release_notes(version) if version != "dev" else "(dev build)\n"
+    # "dev" is the only version allowed to have no changelog section: it is a
+    # rehearsal build, not something anyone releases.
+    notes = "(dev build)\n" if version == "dev" else release_notes(version)
 
     if DIST.exists():
         shutil.rmtree(DIST)
