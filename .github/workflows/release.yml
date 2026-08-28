@@ -8,6 +8,14 @@ on:
     tags:
       - 'v*'
   workflow_dispatch:
+    inputs:
+      version:
+        description: >-
+          Version to package, e.g. 1.0.0. Leave blank for a "dev" build, which
+          skips the CHANGELOG.md lookup. Give a real version to rehearse that
+          check too.
+        required: false
+        default: ''
 
 permissions:
   contents: write   # gh release create needs it; nothing else does
@@ -33,8 +41,17 @@ jobs:
       - name: Fail if the committed dictionary is not reproducible
         run: git diff --exit-code -- frequency_dicts/
 
+      # On a tag the script reads the version from the tag itself. On a manual
+      # run there is no tag, so the version is whatever was typed in, or "dev".
       - name: Build release assets
-        run: python3 scripts/build_release_assets.py
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          if [ -n "$VERSION" ]; then
+            python3 scripts/build_release_assets.py --version "$VERSION"
+          else
+            python3 scripts/build_release_assets.py
+          fi
 
       - name: Upload assets as artifacts (dry run)
         if: github.event_name == 'workflow_dispatch'

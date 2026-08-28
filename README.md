@@ -203,7 +203,8 @@ Versions are semantic, read for a dataset:
 To cut a release: add the section to `CHANGELOG.md`, bump `version` and
 `date-released` in [`CITATION.cff`](CITATION.cff), then tag. Running the
 workflow via **workflow_dispatch** first builds the same assets and uploads them
-as run artifacts, without spending a tag.
+as run artifacts, without spending a tag. Leave its `version` box blank for a
+`dev` build, or type the real version to check its changelog section too.
 
 Assets can also be built locally:
 

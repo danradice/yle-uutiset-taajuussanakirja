@@ -98,15 +98,20 @@ All formats keep the dictionary's three columns; no `rank` is added, since the
 homonym split puts some lemmas on two rows and ties in `count` leave rank
 ambiguous.
 
-The version comes from `--version`, else `$GITHUB_REF_NAME` with a leading `v`
-stripped, else `dev`. The script exits non-zero if `CHANGELOG.md` has no section
-for the version — the guard against tagging a release nobody wrote notes for.
+The version comes from `--version`, else the tag being built (`$GITHUB_REF_NAME`
+minus a leading `v`, **only** when `$GITHUB_REF_TYPE` is `tag`), else `dev`. The
+ref-type check matters: on `workflow_dispatch` `$GITHUB_REF_NAME` is the branch,
+which is not a version. Except for `dev`, the script exits non-zero if
+`CHANGELOG.md` has no section for the version — the guard against tagging a
+release nobody wrote notes for.
 
 `.github/workflows/release.yml` runs on a `v*` tag: it reruns stages 2 and 3 and
 fails on `git diff --exit-code -- frequency_dicts/`, so a release cannot ship a
 dictionary that the committed intermediates do not reproduce. Then it builds the
 assets and publishes with `gh release create`. `workflow_dispatch` runs the same
-steps but uploads the assets as run artifacts instead of releasing.
+steps but uploads the assets as run artifacts instead of releasing; its optional
+`version` input is passed through to the script, so a dry run can either build
+`dev` or rehearse a real version and exercise the changelog check.
 
 To cut a release: add the `## [X.Y.Z]` section to `CHANGELOG.md`, bump `version`
 and `date-released` in `CITATION.cff`, then push the tag. Versions are semver
