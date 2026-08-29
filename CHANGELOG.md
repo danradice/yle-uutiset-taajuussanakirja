@@ -14,7 +14,7 @@ numbers:
 Each released version is tagged `vX.Y.Z`, and the section below the matching
 heading is what ships as the GitHub release notes.
 
-## [1.0.0] - 2026-08-28
+## [1.0.0] - 2026-08-29
 
 First release of the dictionary.
 
