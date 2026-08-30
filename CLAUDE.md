@@ -82,36 +82,52 @@ Rows whose `Sanaluokat` is blank (forms the sanalista lists without a word
 class: `enempää`, `osin`, `vuonna`, ...) go to
 `taajuussanakirja_luokittelematon.tsv`, so no dictionary row is lost.
 
-### Releases — `build_release_assets.py`
+### Stage 4 (optional) — `build_top_list.py`
 
-Packaging only; never a recount. Reads the finished dictionary and the
-subdictionaries and writes `dist/` (gitignored, wiped each run): a `.zip` and a
-`.tar.gz` of the same tree, `SHA256SUMS.txt` over both, and `RELEASE_NOTES.md`
-sliced out of `CHANGELOG.md`.
+Cuts the learner-facing top-10 000 head off the dictionary and writes it twice:
+`taajuussanakirja_top10000.tsv` (UTF-8, LF) and `taajuussanakirja_top10000.csv`
+(UTF-8 **with BOM**, CRLF). Both are committed, and they are the *only* assets a
+release attaches.
 
-The archives carry the dictionary, the 15 subdictionaries, `LICENSE`, `NOTICE`
-and `CITATION.cff` verbatim, a generated bundle `README.md` with absolute links,
-and three formats derived at build time — CSV (UTF-8 **with BOM**, for Excel),
-JSON, and a top-5000 head. Those three are deliberately **not** committed, so
-the repo holds one copy of the data and the alternative formats cannot drift.
-All formats keep the dictionary's three columns; no `rank` is added, since the
-homonym split puts some lemmas on two rows and ties in `count` leave rank
-ambiguous.
+The dictionary is already sorted, so this is `rows[:TOP_N]` — a head, not a
+re-sort, which means the top list cannot disagree with the dictionary. Same
+three columns, no `rank` (the homonym split puts some lemmas on two rows and
+ties leave rank ambiguous). It prints coverage (94.95% of tokens), the distinct
+lemma count (9 986 lemmas in 10 000 rows), and a warning when the positional
+cutoff falls inside a run of equal counts — currently 3 rows share count 1 361
+and fall outside.
 
-The version comes from `--version`, else the tag being built (`$GITHUB_REF_NAME`
-minus a leading `v`, **only** when `$GITHUB_REF_TYPE` is `tag`), else `dev`. The
-ref-type check matters: on `workflow_dispatch` `$GITHUB_REF_NAME` is the branch,
-which is not a version. Except for `dev`, the script exits non-zero if
-`CHANGELOG.md` has no section for the version — the guard against tagging a
-release nobody wrote notes for.
+Both files sit under GitHub's 512 KB limit for rendering tabular data, so they
+display as tables on github.com where the 2.4 MB dictionary does not. That is
+why they are committed rather than generated at release time.
 
-`.github/workflows/release.yml` runs on a `v*` tag: it reruns stages 2 and 3 and
-fails on `git diff --exit-code -- frequency_dicts/`, so a release cannot ship a
-dictionary that the committed intermediates do not reproduce. Then it builds the
-assets and publishes with `gh release create`. `workflow_dispatch` runs the same
-steps but uploads the assets as run artifacts instead of releasing; its optional
-`version` input is passed through to the script, so a dry run can either build
-`dev` or rehearse a real version and exercise the changelog check.
+### Line endings
+
+Every TSV is written with `lineterminator="\n"`. Python's `csv.writer` defaults
+to CRLF, which made shell tools fail *silently*: `grep -cP '\t1$'` returned 0
+instead of 5 330, and `cut -f3` yielded a trailing `\r` that compared unequal to
+the number it printed as. The **CSV is the sole exception** and keeps CRLF plus
+a BOM, because RFC 4180 specifies it and Excel expects it.
+
+### Releases
+
+`.github/workflows/release.yml` runs on a `v*` tag. It reruns stages 2–4 and
+fails on `git diff --exit-code -- frequency_dicts/`, so a release cannot ship
+data that the committed intermediates do not reproduce. It then slices the
+version's section out of `CHANGELOG.md` with `awk` — failing if that section is
+absent, the guard against tagging a release nobody wrote notes for — and calls
+`gh release create` with the two top-10 000 files. The version comes from the
+tag only (`$GITHUB_REF_TYPE` must be `tag`); on `workflow_dispatch` the gates run
+and publishing is skipped.
+
+There is deliberately **no packaging step**: both assets are committed files, so
+nothing is generated at release time. GitHub's automatic source archive is the
+"everything" download, and it is also what Zenodo archives for the DOI, so the
+archived and advertised copies match.
+
+Asset filenames carry no version, so
+`…/releases/latest/download/taajuussanakirja_top10000.csv` always resolves to
+the newest release.
 
 To cut a release: add the `## [X.Y.Z]` section to `CHANGELOG.md`, bump `version`
 and `date-released` in `CITATION.cff`, then push the tag. Versions are semver
@@ -125,7 +141,7 @@ python3 scripts/count_local_vrt.py            # stage 1 (slow; reads all VRT fil
 python3 scripts/count_homonym_pos.py          # homonym per-POS counts (slow; feeds the manual step)
 python3 scripts/split_homonym_counts.py       # stage 2 — builds the final dictionary (fast)
 python3 scripts/build_pos_subdictionaries.py  # stage 3 — per-word-class subdictionaries (fast)
-python3 scripts/build_release_assets.py       # release archives into dist/ (fast)
+python3 scripts/build_top_list.py             # stage 4 — top-10 000 list, TSV + CSV (fast)
 ```
 
 Scripts can be run from any directory: all data paths are anchored to the repo
@@ -141,8 +157,8 @@ root via `ROOT = Path(__file__).resolve().parent.parent`, not the CWD.
   per word class, written by stage 3, plus `taajuussanakirja_luokittelematon.tsv`
   for rows with a blank `Sanaluokat`. These overlap: see stage 3 above before
   aggregating anything across them.
-- `dist/` — release archives built by `build_release_assets.py`; gitignored
-  and rebuilt from scratch on every run, never edited by hand.
+- `frequency_dicts/taajuussanakirja_top10000.{tsv,csv}` — the top-10 000 head,
+  written by stage 4; the only files a release attaches.
 - `auxiliary_data/` — intermediates and working files, all tab-separated:
   - `lemma_counts_merged_2011_2024.tsv` — stage 1 output (POS merged).
   - `homonym_pos_counts_2011_2024_raw.tsv` — `count_homonym_pos.py` output.

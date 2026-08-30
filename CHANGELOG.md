@@ -14,6 +14,48 @@ numbers:
 Each released version is tagged `vX.Y.Z`, and the section below the matching
 heading is what ships as the GitHub release notes.
 
+## [1.1.0] - 2026-08-30
+
+Adds a learner-facing top-10 000 list and fixes the line endings on every TSV.
+
+### Added
+
+- `frequency_dicts/taajuussanakirja_top10000.tsv` and
+  `taajuussanakirja_top10000.csv` — the 10 000 most frequent rows, which cover
+  **94.95%** of all corpus tokens. Both are committed and are the only files a
+  release attaches; the full dictionary and the subdictionaries travel in
+  GitHub's automatic source archive.
+- The CSV is UTF-8 **with a BOM** and RFC 4180 CRLF line endings, so Excel opens
+  it with `ä`/`ö` intact. It is the only file here that is not LF.
+
+### Changed
+
+- **All TSV files now use LF line endings**, not CRLF. The old CRLF made shell
+  tools fail silently rather than loudly: `grep -cP '\t1$'` returned 0 instead of
+  the 5 330 words occurring exactly once, and `cut -f3` returned values with a
+  trailing carriage return that compared unequal to the number they printed as.
+  Only the line endings changed — every value in every file is identical to
+  1.0.0.
+
+### Removed
+
+- `taajuussanakirja_top5000.tsv`, which shipped inside the 1.0.0 archives. The
+  top-10 000 replaces it: 5 000 rows covered 90.09% of tokens against 94.95%.
+- The `.zip`/`.tar.gz` release bundles and `SHA256SUMS.txt`. The bundle was
+  larger than GitHub's own source archive while containing less, and Zenodo
+  archives the source archive rather than uploaded assets — so the DOI'd copy
+  now matches what the release page advertises. Zenodo publishes an MD5 per file,
+  which covers what the checksums were for.
+
+### Notes on the top-10 000
+
+- The cutoff is **positional**. Rank 10 000 has count 1 361, and three further
+  rows share that exact count, so they fall outside the list despite being no
+  less frequent than the last word kept.
+- It is 10 000 **rows**, which is 9 986 distinct lemmas: 14 words (`aika`,
+  `päästä`, `koko`, `juuri`, `vasta`, `kuusi` and others) appear twice because
+  the homonym split gives them one row per word class.
+
 ## [1.0.0] - 2026-08-29
 
 First release of the dictionary.

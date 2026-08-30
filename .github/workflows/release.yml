@@ -1,21 +1,12 @@
 name: release
 
-# Tagging vX.Y.Z publishes a release. workflow_dispatch runs everything except
-# the publish step and uploads the assets as run artifacts, so the packaging can
-# be exercised without spending a tag.
+# Tagging vX.Y.Z publishes a release. workflow_dispatch runs the same gates
+# without publishing, so the checks can be exercised without spending a tag.
 on:
   push:
     tags:
       - 'v*'
   workflow_dispatch:
-    inputs:
-      version:
-        description: >-
-          Version to package, e.g. 1.0.0. Leave blank for a "dev" build, which
-          skips the CHANGELOG.md lookup. Give a real version to rehearse that
-          check too.
-        required: false
-        default: ''
 
 permissions:
   contents: write   # gh release create needs it; nothing else does
@@ -30,35 +21,47 @@ jobs:
         with:
           python-version: '3.12'
 
-      # Stages 2 and 3 need no corpora and take seconds, so a release can always
-      # afford to prove that the committed dictionary is the one the committed
-      # intermediates produce. If it is not, nothing gets published.
-      - name: Rebuild the dictionary from the committed intermediates
+      # Stages 2-4 need no corpora and take seconds, so a release can always
+      # afford to prove that every committed file is the one the committed
+      # intermediates produce. If any of them is not, nothing gets published.
+      - name: Rebuild everything from the committed intermediates
         run: |
           python3 scripts/split_homonym_counts.py
           python3 scripts/build_pos_subdictionaries.py
+          python3 scripts/build_top_list.py
 
-      - name: Fail if the committed dictionary is not reproducible
+      - name: Fail if the committed data is not reproducible
         run: git diff --exit-code -- frequency_dicts/
 
-      # On a tag the script reads the version from the tag itself. On a manual
-      # run there is no tag, so the version is whatever was typed in, or "dev".
-      - name: Build release assets
-        env:
-          VERSION: ${{ inputs.version }}
+      # The version only comes from a tag: on workflow_dispatch GITHUB_REF_NAME
+      # is the branch the run started from, which is not a version.
+      - name: Extract release notes from CHANGELOG.md
         run: |
-          if [ -n "$VERSION" ]; then
-            python3 scripts/build_release_assets.py --version "$VERSION"
+          NOTES="$RUNNER_TEMP/RELEASE_NOTES.md"
+          echo "NOTES=$NOTES" >> "$GITHUB_ENV"
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then
+            VERSION="${GITHUB_REF_NAME#v}"
           else
-            python3 scripts/build_release_assets.py
+            VERSION="dev"
           fi
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
 
-      - name: Upload assets as artifacts (dry run)
-        if: github.event_name == 'workflow_dispatch'
-        uses: actions/upload-artifact@v7
-        with:
-          name: release-assets
-          path: dist/
+          awk -v v="$VERSION" \
+            '$0 ~ "^## \\["v"\\]" {f=1; next} f && /^## / {exit} f' \
+            CHANGELOG.md > "$NOTES"
+
+          if [ ! -s "$NOTES" ]; then
+            if [ "$VERSION" = "dev" ]; then
+              echo "dev run: no changelog section expected, continuing"
+            else
+              echo "no '## [$VERSION]' section in CHANGELOG.md --" \
+                   "write the changelog entry before tagging $VERSION" >&2
+              exit 1
+            fi
+          else
+            echo "--- release notes for $VERSION ---"
+            cat "$NOTES"
+          fi
 
       - name: Publish the release
         if: startsWith(github.ref, 'refs/tags/v')
@@ -67,6 +70,7 @@ jobs:
         run: |
           gh release create "$GITHUB_REF_NAME" \
             --title "Yle Uutisten taajuussanakirja $GITHUB_REF_NAME" \
-            --notes-file dist/RELEASE_NOTES.md \
+            --notes-file "$NOTES" \
             --verify-tag \
-            dist/*.zip dist/*.tar.gz dist/SHA256SUMS.txt
+            frequency_dicts/taajuussanakirja_top10000.tsv \
+            frequency_dicts/taajuussanakirja_top10000.csv

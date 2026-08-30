@@ -150,7 +150,7 @@ def main():
     rows.sort(key=lambda r: (r[0], -r[2], r[1]))  # headword asc, count desc, pos
 
     with open(OUTPUT, "w", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f, delimiter="\t")
+        writer = csv.writer(f, delimiter="\t", lineterminator="\n")
         writer.writerow(["Hakusana", "pos", "count", "expected"])
         writer.writerows(rows)
 
