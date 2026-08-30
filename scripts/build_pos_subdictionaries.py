@@ -70,7 +70,7 @@ def main():
         cls_rows.sort(key=lambda r: (-r[2], r[0]))  # frequency desc, then headword
         path = OUTDIR / f"taajuussanakirja_{filename_slug(cls)}.tsv"
         with open(path, "w", newline="", encoding="utf-8") as f:
-            writer = csv.writer(f, delimiter="\t")
+            writer = csv.writer(f, delimiter="\t", lineterminator="\n")
             writer.writerow(header)
             writer.writerows(cls_rows)
         print(f"{len(cls_rows):>6} rows  {path.name}")
@@ -79,7 +79,7 @@ def main():
         unassigned.sort(key=lambda r: (-r[2], r[0]))
         path = OUTDIR / "taajuussanakirja_luokittelematon.tsv"
         with open(path, "w", newline="", encoding="utf-8") as f:
-            writer = csv.writer(f, delimiter="\t")
+            writer = csv.writer(f, delimiter="\t", lineterminator="\n")
             writer.writerow(header)
             writer.writerows(unassigned)
         print(f"{len(unassigned):>6} rows  {path.name}  (blank Sanaluokat)")

@@ -23,25 +23,36 @@ että	konjunktio	2616520
 
 ## Download
 
-Grab the [latest release](https://github.com/danradice/yle-uutiset-taajuussanakirja/releases/latest)
-— you only need to clone this repo if you want to rebuild the dictionary.
+**Most people want the top 10 000.** It covers **94.95%** of everything in the
+corpus, renders as a browsable table right here on GitHub, and needs no
+unzipping:
 
-Both archives (`.zip` and `.tar.gz`) unpack to the same tree:
+| | Direct link | For |
+|---|---|---|
+| [`taajuussanakirja_top10000.tsv`](frequency_dicts/taajuussanakirja_top10000.tsv) | [latest release](https://github.com/danradice/yle-uutiset-taajuussanakirja/releases/latest/download/taajuussanakirja_top10000.tsv) | Scripts, text tools |
+| [`taajuussanakirja_top10000.csv`](frequency_dicts/taajuussanakirja_top10000.csv) | [latest release](https://github.com/danradice/yle-uutiset-taajuussanakirja/releases/latest/download/taajuussanakirja_top10000.csv) | Excel, Google Sheets, Anki |
 
-| File | Contents |
-|---|---|
-| `taajuussanakirja_ylenews_2011_2024.tsv` | The dictionary, exactly as committed here. |
-| `taajuussanakirja_ylenews_2011_2024.csv` | The same rows as CSV, UTF-8 **with BOM** so Excel reads `ä`/`ö` correctly. |
-| `taajuussanakirja_ylenews_2011_2024.json` | The same rows as an array of objects. |
-| `taajuussanakirja_top5000.tsv` | The 5 000 most frequent rows. |
-| `subdictionaries/` | All 15 word-class files. |
-| `README.md`, `LICENSE`, `NOTICE`, `CITATION.cff` | Docs, licence, attribution, citation metadata. |
+Those release links always resolve to the newest version, so they are safe to
+put on a course page and forget.
 
-`SHA256SUMS.txt` is attached alongside them; verify with `sha256sum -c SHA256SUMS.txt`.
+Two things to know about the list. The cutoff is **positional**: rank 10 000 has
+count 1 361 and three further rows share that count, so they fall outside the
+list despite being no less frequent. And it is 10 000 *rows*, which is 9 986
+distinct lemmas — 14 words appear twice because the homonym split gives them one
+row per word class.
 
-The CSV, JSON and top-5000 files are generated at release time rather than
-committed, so the repository holds exactly one copy of the data and the
-alternative formats cannot drift out of sync with it.
+**For everything else**, take the *Source code* archive from the
+[latest release](https://github.com/danradice/yle-uutiset-taajuussanakirja/releases/latest),
+or just clone. It holds the full 87 870-row dictionary, all 15 subdictionaries,
+the build scripts and the intermediate counts — 2.4 MB compressed.
+
+### File formats
+
+Every `.tsv` here is UTF-8 with **LF** line endings and needs no quoting: no
+field contains a tab, so splitting on `\t` is always correct. The `.csv` is the
+single exception — UTF-8 **with a BOM** and **CRLF** endings, as RFC 4180
+specifies and Excel expects, with the 1 384 comma-bearing `Sanaluokat` values
+quoted. If you are scripting, prefer the TSV.
 
 ### Columns
 
@@ -100,7 +111,7 @@ Rows whose `Sanaluokat` is blank (`enempää`, `osin`, `vuonna`, …) land in
 
 ## Rebuilding
 
-### Stage 2 and 3 run from what is in this repo
+### Stages 2–4 run from what is in this repo
 
 The intermediate counts are committed, so you can regenerate the dictionary and
 the subdictionaries without downloading anything:
@@ -108,6 +119,7 @@ the subdictionaries without downloading anything:
 ```bash
 python3 scripts/split_homonym_counts.py       # stage 2 — builds the dictionary
 python3 scripts/build_pos_subdictionaries.py  # stage 3 — subdictionaries
+python3 scripts/build_top_list.py             # stage 4 — the top-10 000 list
 ```
 
 Python 3 standard library only; no dependencies. Scripts can be run from any
@@ -185,12 +197,13 @@ and the resulting decisions in
 
 ## Releases and versioning
 
-Tagged releases are published from
-[`CHANGELOG.md`](CHANGELOG.md) by
-[`.github/workflows/release.yml`](.github/workflows/release.yml): pushing a
-`vX.Y.Z` tag rebuilds the dictionary from the committed intermediates, fails if
-the result differs from what is committed, packages the archives, and creates
-the release with that version's changelog section as its notes.
+Pushing a `vX.Y.Z` tag runs
+[`.github/workflows/release.yml`](.github/workflows/release.yml), which rebuilds
+stages 2–4 from the committed intermediates, fails if anything under
+`frequency_dicts/` differs from what is committed, and then publishes the
+release with that version's `CHANGELOG.md` section as its notes. The only
+attached assets are the two top-10 000 files; GitHub's automatic source archive
+carries everything else.
 
 Versions are semantic, read for a dataset:
 
@@ -200,17 +213,10 @@ Versions are semantic, read for a dataset:
 | **MINOR** | Added data: more headwords, an extra column, further subdictionaries. |
 | **PATCH** | Corrections that leave method and coverage intact. |
 
-To cut a release: add the section to `CHANGELOG.md`, bump `version` and
-`date-released` in [`CITATION.cff`](CITATION.cff), then tag. Running the
-workflow via **workflow_dispatch** first builds the same assets and uploads them
-as run artifacts, without spending a tag. Leave its `version` box blank for a
-`dev` build, or type the real version to check its changelog section too.
-
-Assets can also be built locally:
-
-```bash
-python3 scripts/build_release_assets.py --version 1.0.0   # writes dist/
-```
+To cut a release: add the section to [`CHANGELOG.md`](CHANGELOG.md), bump
+`version` and `date-released` in [`CITATION.cff`](CITATION.cff), then tag.
+Running the workflow via **workflow_dispatch** first exercises both gates
+without spending a tag.
 
 ## License
 

@@ -143,7 +143,7 @@ def main():
     out_rows.sort(key=lambda r: (-r[2], r[0]))  # frequency desc, then headword
 
     with open(OUTPUT, "w", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f, delimiter="\t")
+        writer = csv.writer(f, delimiter="\t", lineterminator="\n")
         writer.writerow(header)
         writer.writerows(out_rows)
 
