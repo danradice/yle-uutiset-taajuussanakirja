@@ -2,6 +2,7 @@
 
 [![Latest release](https://img.shields.io/github/v/release/danradice/yle-uutiset-taajuussanakirja)](https://github.com/danradice/yle-uutiset-taajuussanakirja/releases/latest)
 [![License: CC BY 4.0](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg)](LICENSE)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22162057.svg)](https://doi.org/10.5281/zenodo.22162057)
 
 Corpus frequencies for the headwords of the Kotus *nykysuomen sanalista*,
 counted against the **Yle Finnish News Archive (YLENEWS_FI) 2011–2024**.
@@ -213,22 +214,40 @@ Versions are semantic, read for a dataset:
 | **MINOR** | Added data: more headwords, an extra column, further subdictionaries. |
 | **PATCH** | Corrections that leave method and coverage intact. |
 
-To cut a release: add the section to [`CHANGELOG.md`](CHANGELOG.md), bump
-`version` and `date-released` in [`CITATION.cff`](CITATION.cff), then tag.
-Running the workflow via **workflow_dispatch** first exercises both gates
-without spending a tag.
+To cut a release: add the section to [`CHANGELOG.md`](CHANGELOG.md), then bump
+the version and date in **both** citation files — `version` and `date-released`
+in [`CITATION.cff`](CITATION.cff), `version`, `publication_date` and the tagged
+tree link in [`.zenodo.json`](.zenodo.json) — and tag.
+[`scripts/check_release_metadata.py`](scripts/check_release_metadata.py) fails
+the release if those disagree with each other or with the tag. Running the
+workflow via **workflow_dispatch** first exercises every gate without spending a
+tag.
+
+## How to cite
+
+> Radice, D. (2026). *Yle Uutisten taajuussanakirja — a news-based Finnish
+> frequency dictionary* (Version 1.1.1) [Data set]. Zenodo.
+> <https://doi.org/10.5281/zenodo.22162057>
+
+That is the **concept DOI**, which always resolves to the newest version. Every
+release also has its own version DOI, shown on the Zenodo record page — cite
+that one if you need to pin the exact data behind a published result.
+
+GitHub's "Cite this repository" button renders the same citation, in APA and
+BibTeX, from [`CITATION.cff`](CITATION.cff).
 
 ## License
 
-[CC BY 4.0](LICENSE). If you use a frequency dictionary from this repo, please
-attribute — [`CITATION.cff`](CITATION.cff) carries the same details in
-machine-readable form, and GitHub's "Cite this repository" button renders it:
+[CC BY 4.0](LICENSE). The attribution notice for this work — the credit line the
+licence asks you to carry, which is a different thing from the citation above:
 
 > Yle Uutisten taajuussanakirja — a news-based Finnish frequency dictionary,
 > Daniel Radice, CC BY 4.0. Derived from the Yle Finnish News Archive
 > 2011–2024 (© Yle, CC BY 4.0, via Kielipankki) and the Kotus Nykysuomen
-> sanalista (CC BY).
+> sanalista (© Kotus, CC BY 4.0).
 
-Both upstream sources are themselves CC BY and require attribution in their own
-right. [NOTICE](NOTICE) records exactly what is covered and who must be credited;
-[LICENSE](LICENSE) is the full CC BY 4.0 text.
+Both upstream sources are themselves CC BY 4.0 and require attribution in their
+own right. The citation button shows only this work and never the sources it
+derives from, which is why they are spelled out here. [NOTICE](NOTICE) records
+exactly what is covered and who must be credited; [LICENSE](LICENSE) is the full
+CC BY 4.0 text.

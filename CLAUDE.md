@@ -129,10 +129,44 @@ Asset filenames carry no version, so
 `…/releases/latest/download/taajuussanakirja_top10000.csv` always resolves to
 the newest release.
 
-To cut a release: add the `## [X.Y.Z]` section to `CHANGELOG.md`, bump `version`
-and `date-released` in `CITATION.cff`, then push the tag. Versions are semver
-read for a dataset — MAJOR for a different corpus span or counting method, MINOR
-for added data or columns, PATCH for corrections.
+### Citation metadata
+
+Two files describe a release, to two different services, and they must agree.
+
+`CITATION.cff` is what GitHub's "Cite this repository" button renders; its
+`preferred-citation` block is what makes that button print the DOI and name
+Zenodo as publisher, since CFF has no top-level `publisher`. The DOI it carries
+is the **concept** DOI (`10.5281/zenodo.22162057`), which resolves to the newest
+version — a version DOI cannot live in the repo, because Zenodo only mints it
+once the tag has been published.
+
+`.zenodo.json` drives the Zenodo record. It exists because Zenodo's CFF reader
+maps just six fields (title, authors, abstract, keywords, license, message) and
+ignores `version`, `date-released`, `type`, `identifiers` and `references`;
+those fall back to GitHub release defaults, so the record took its version
+straight from the tag and read *Version v1.1.0*. Zenodo reads `.zenodo.json`
+first and **ignores `CITATION.cff` entirely when it is present**, so everything
+the record needs has to be in it. Its fields are the pre-RDM "legacy" Zenodo
+shape (`upload_type`, `imprint_publisher`, …), still the supported contract.
+Unknown keys are dropped silently, but a bad *value* — an unmapped licence id or
+relation type — fails the release archiving, so change it carefully. Two traps
+worth remembering: omitting `license` silently makes a dataset **CC0**, and
+`imprint_publisher` is deliberately absent because it defaults to `Zenodo`,
+which is correct (the publisher is the archive holding the fixed copy).
+
+`scripts/check_release_metadata.py` is the gate. It fails the release when the
+two files disagree on version or date, when the tagged tree link in
+`.zenodo.json` is stale, or — on a tag run — when either file disagrees with the
+tag. It reads the two CFF scalars with an anchored regex rather than a YAML
+parse, deliberately: PyYAML is absent from a clean `setup-python` runner and
+this repo is stdlib-only everywhere else.
+
+To cut a release: add the `## [X.Y.Z]` section to `CHANGELOG.md`, then bump the
+version and date in **both** citation files — `version` and `date-released` in
+`CITATION.cff`; `version`, `publication_date` and the `/tree/vX.Y.Z` link in
+`.zenodo.json` — then push the tag. Versions are semver read for a dataset —
+MAJOR for a different corpus span or counting method, MINOR for added data or
+columns, PATCH for corrections.
 
 ### Commands
 
@@ -142,6 +176,7 @@ python3 scripts/count_homonym_pos.py          # homonym per-POS counts (slow; fe
 python3 scripts/split_homonym_counts.py       # stage 2 — builds the final dictionary (fast)
 python3 scripts/build_pos_subdictionaries.py  # stage 3 — per-word-class subdictionaries (fast)
 python3 scripts/build_top_list.py             # stage 4 — top-10 000 list, TSV + CSV (fast)
+python3 scripts/check_release_metadata.py     # citation metadata gate (fast)
 ```
 
 Scripts can be run from any directory: all data paths are anchored to the repo

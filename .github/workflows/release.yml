@@ -63,6 +63,13 @@ jobs:
             cat "$NOTES"
           fi
 
+      # Zenodo builds the DOI record from .zenodo.json and ignores CITATION.cff
+      # whenever it is present, so the two files describe the same release to two
+      # services with nothing but this check keeping them in step. A stale version
+      # in either is invisible until it has been published under a DOI.
+      - name: Fail if the citation metadata does not match the tag
+        run: python3 scripts/check_release_metadata.py "$VERSION"
+
       - name: Publish the release
         if: startsWith(github.ref, 'refs/tags/v')
         env:

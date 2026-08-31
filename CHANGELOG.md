@@ -14,6 +14,35 @@ numbers:
 Each released version is tagged `vX.Y.Z`, and the section below the matching
 heading is what ships as the GitHub release notes.
 
+## [1.1.1] - 2026-08-31
+
+Citation metadata only. **No dictionary data changed** — every file under
+`frequency_dicts/` is byte-identical to 1.1.0.
+
+### Added
+
+- `.zenodo.json`, which now drives the Zenodo record. Zenodo's CITATION.cff
+  reader maps only title, authors, abstract, keywords, licence and message, so
+  `version` fell through to the git tag and the record read *Version v1.1.0*
+  under the wrong resource type. `.zenodo.json` takes precedence over
+  CITATION.cff and pins the version, publication date, `dataset` type, language,
+  ORCID and links to both upstream corpora.
+- `scripts/check_release_metadata.py`, run by the release workflow: it fails the
+  release when `CITATION.cff` and `.zenodo.json` disagree with each other or
+  with the tag, which is otherwise invisible until the DOI is already minted.
+- A **How to cite** section and a DOI badge in `README.md`, both pointing at the
+  concept DOI `10.5281/zenodo.22162057`, which always resolves to the newest
+  version.
+
+### Changed
+
+- `CITATION.cff` gains that concept DOI, an ORCID and an affiliation, and a
+  `preferred-citation` block naming Zenodo as the publisher — so GitHub's "Cite
+  this repository" button and the Zenodo record now render the same citation.
+- The attribution notice in `README.md` and `NOTICE` is labelled as the licence
+  notice it is, rather than as "a suitable citation", and the Kotus *nykysuomen
+  sanalista* is recorded as CC BY 4.0 rather than an unversioned CC BY.
+
 ## [1.1.0] - 2026-08-30
 
 Adds a learner-facing top-10 000 list and fixes the line endings on every TSV.
