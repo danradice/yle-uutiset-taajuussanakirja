@@ -149,6 +149,15 @@ learned the hard way from its source:
   fix it by declaring a different `type`: it would misdescribe the dataset and
   lose the `[Data set]` label.
 
+`preferred-citation` is why the file restates its own title, authors, version and
+year: APA prefers the DOI unaided, but the BibTeX formatter takes its `url` from
+`repository-code`, and only a reference — which is what `preferred-citation`
+becomes — has no `repository-code` to lose to. So that block is what puts the DOI
+in *both* formats. Its `publisher: Zenodo` is accurate metadata that neither
+format prints. Every value it duplicates is checked against the original by the
+gate below, because a stale copy would render on the button after the next
+release.
+
 The DOI is the **concept** DOI (`10.5281/zenodo.22162057`), which resolves to the
 newest version — a version DOI cannot live in the repo, because Zenodo only mints
 it once the tag has been published.
@@ -171,11 +180,12 @@ worth remembering: omitting `license` silently makes a dataset **CC0**, and
 which is correct (the publisher is the archive holding the fixed copy).
 
 `scripts/check_release_metadata.py` is the gate. It fails the release when the
-two files disagree on version or date, when the tagged tree link in
-`.zenodo.json` is stale, or — on a tag run — when either file disagrees with the
-tag. It reads the two CFF scalars with an anchored regex rather than a YAML
-parse, deliberately: PyYAML is absent from a clean `setup-python` runner and
-this repo is stdlib-only everywhere else.
+two files disagree on version or date, when `CITATION.cff` disagrees with itself
+(a `version` restated under `preferred-citation`, a `year` that is not
+`date-released`'s), when the tagged tree link in `.zenodo.json` is stale, or — on
+a tag run — when either file disagrees with the tag. It reads the CFF scalars
+with anchored regexes rather than a YAML parse, deliberately: PyYAML is absent
+from a clean `setup-python` runner and this repo is stdlib-only everywhere else.
 
 To cut a release: add the `## [X.Y.Z]` section to `CHANGELOG.md`, then bump the
 version and date in **both** citation files — `version` and `date-released` in

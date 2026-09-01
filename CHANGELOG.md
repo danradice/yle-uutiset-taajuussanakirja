@@ -28,8 +28,10 @@ Citation metadata only. **No dictionary data changed** — every file under
   CITATION.cff and pins the version, publication date, `dataset` type, language,
   ORCID and links to both upstream corpora.
 - `scripts/check_release_metadata.py`, run by the release workflow: it fails the
-  release when `CITATION.cff` and `.zenodo.json` disagree with each other or
-  with the tag, which is otherwise invisible until the DOI is already minted.
+  release when `CITATION.cff` and `.zenodo.json` disagree with each other, with
+  the tag, or — since the citation restates its own version and year — with
+  themselves. Any of those is otherwise invisible until the DOI is already
+  minted.
 - A **How to cite** section and a DOI badge in `README.md`, both pointing at the
   concept DOI `10.5281/zenodo.22162057`, which always resolves to the newest
   version.
@@ -39,9 +41,11 @@ Citation metadata only. **No dictionary data changed** — every file under
 - `CITATION.cff` gains that concept DOI as its top-level `doi`, plus an ORCID and
   an affiliation, so the "Cite this repository" button prints the DOI instead of
   the repository URL. Its renderer reads `doi` and never `identifiers`, and
-  otherwise falls back to `repository-code`. The button's string still differs
-  from Zenodo's in styling — it writes `[Data set]` and prints no publisher for a
-  dataset, which no CFF field can change.
+  otherwise falls back to `repository-code`; the DOI is restated under
+  `preferred-citation` so that it is the link in the BibTeX output too, not only
+  in APA. The button's string still differs from Zenodo's in styling — it writes
+  `[Data set]` and prints no publisher for a dataset, which no CFF field can
+  change.
 - The attribution notice in `README.md` and `NOTICE` is labelled as the licence
   notice it is, rather than as "a suitable citation", and the Kotus *nykysuomen
   sanalista* is recorded as CC BY 4.0 rather than an unversioned CC BY.

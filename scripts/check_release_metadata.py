@@ -92,6 +92,27 @@ def main():
             if url != expected:
                 errors.append(f"tree link is {url}, expected {expected}")
 
+    # CITATION.cff restates the version and the year inside preferred-citation,
+    # where cff_scalar() cannot see them -- its anchor is exactly what stops the
+    # nested keys being read as the top-level ones. Check the copies agree.
+    versions = set(
+        re.findall(r"^[ \t]*version:[ \t]*'?([^'\n]+?)'?[ \t]*$", cff_text, re.MULTILINE)
+    )
+    if len(versions) > 1:
+        errors.append(
+            "CITATION.cff disagrees with itself on version: "
+            + ", ".join(sorted(versions))
+        )
+
+    if cff_date:
+        years = re.findall(r"^[ \t]*year:[ \t]*'?(\d{4})'?[ \t]*$", cff_text, re.MULTILINE)
+        for year in years:
+            if year != cff_date[:4]:
+                errors.append(
+                    f"CITATION.cff has year {year} under preferred-citation, "
+                    f"but date-released is {cff_date}"
+                )
+
     if tag_version:
         if cff_version and cff_version != tag_version:
             errors.append(

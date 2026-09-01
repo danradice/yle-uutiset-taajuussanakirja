@@ -40,6 +40,28 @@ keywords:
 license: CC-BY-4.0
 version: 1.1.1
 date-released: '2026-08-31'
+# Restated as the preferred citation so that the DOI, not the repository URL, is
+# the link in *every* format: only APA prefers the DOI unaided, while BibTeX
+# takes its url from repository-code unless the model is a reference. The
+# publisher is accurate but never rendered by GitHub -- see CLAUDE.md. Every
+# value duplicated here is checked against the original by
+# scripts/check_release_metadata.py.
+preferred-citation:
+  type: data
+  title: >-
+    Yle Uutisten taajuussanakirja — a news-based Finnish frequency
+    dictionary
+  authors:
+    - given-names: Daniel
+      family-names: Radice
+      affiliation: University of Helsinki
+      orcid: 'https://orcid.org/0009-0002-5206-6880'
+  year: 2026
+  version: 1.1.1
+  publisher:
+    name: Zenodo
+  doi: 10.5281/zenodo.22162057
+  url: 'https://doi.org/10.5281/zenodo.22162057'
 references:
   - type: database
     title: 'Yle Finnish News Archive 2011-2024, scrambled, VRT'
