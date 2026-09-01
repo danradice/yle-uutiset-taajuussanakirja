@@ -1,0 +1,55 @@
+{
+  "title": "Yle Uutisten taajuussanakirja — a news-based Finnish frequency dictionary",
+  "upload_type": "dataset",
+  "version": "1.1.1",
+  "publication_date": "2026-08-31",
+  "language": "fin",
+  "access_right": "open",
+  "license": "cc-by-4.0",
+  "creators": [
+    {
+      "name": "Radice, Daniel",
+      "affiliation": "University of Helsinki",
+      "orcid": "0009-0002-5206-6880"
+    }
+  ],
+  "description": "<p>Corpus frequencies for the headwords of the Kotus <em>nykysuomen sanalista</em>, counted against the Yle Finnish News Archive (YLENEWS_FI) 2011–2024. 87 870 attested headwords with their sanalista word classes and total corpus occurrences, plus per-word-class subdictionaries and a top-10 000 list covering 94.95% of all corpus tokens.</p><p>Counts are POS-merged because the corpus tagger is not reliable enough to split them; the 43 homonyms whose senses are genuinely different parts of speech were disambiguated by hand.</p>",
+  "keywords": [
+    "Finnish",
+    "frequency dictionary",
+    "taajuussanasto",
+    "corpus linguistics",
+    "lexicography",
+    "Yle",
+    "YLENEWS_FI",
+    "nykysuomen sanalista",
+    "Kielipankki"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/danradice/yle-uutiset-taajuussanakirja/tree/v1.1.1",
+      "relation": "isSupplementTo"
+    },
+    {
+      "identifier": "http://urn.fi/urn:nbn:fi:lb-2020021107",
+      "relation": "isDerivedFrom",
+      "resource_type": "dataset"
+    },
+    {
+      "identifier": "http://urn.fi/urn:nbn:fi:lb-2022082503",
+      "relation": "isDerivedFrom",
+      "resource_type": "dataset"
+    },
+    {
+      "identifier": "http://urn.fi/urn:nbn:fi:lb-2025110405",
+      "relation": "isDerivedFrom",
+      "resource_type": "dataset"
+    },
+    {
+      "identifier": "https://kotus.fi/sanakirjat/kielitoimiston-sanakirja/nykysuomen-sana-aineistot/nykysuomen-sanalista/",
+      "relation": "isDerivedFrom",
+      "resource_type": "dataset"
+    }
+  ],
+  "notes": "Derived from the Yle Finnish News Archive 2011–2024 (© Yle, CC BY 4.0, distributed by FIN-CLARIN / The Language Bank of Finland) and the Kotus Nykysuomen sanalista (© Kotimaisten kielten keskus, CC BY 4.0). Both upstream sources require attribution in their own right."
+}
