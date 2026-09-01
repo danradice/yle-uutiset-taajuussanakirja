@@ -233,8 +233,11 @@ That is the **concept DOI**, which always resolves to the newest version. Every
 release also has its own version DOI, shown on the Zenodo record page — cite
 that one if you need to pin the exact data behind a published result.
 
-GitHub's "Cite this repository" button renders the same citation, in APA and
-BibTeX, from [`CITATION.cff`](CITATION.cff).
+GitHub's "Cite this repository" button offers the same citation in APA and
+BibTeX, from [`CITATION.cff`](CITATION.cff) — same authors, year, version and
+DOI. The two sites style it differently and neither can be talked out of it:
+GitHub writes `[Data set]` and names no publisher, Zenodo writes `[Dataset]` and
+names itself.
 
 ## License
 

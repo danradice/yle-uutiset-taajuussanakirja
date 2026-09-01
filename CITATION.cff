@@ -12,15 +12,12 @@ authors:
     email: daniel.radice@helsinki.fi
     affiliation: University of Helsinki
     orcid: 'https://orcid.org/0009-0002-5206-6880'
-identifiers:
-  - type: doi
-    value: 10.5281/zenodo.22162057
-    description: >-
-      Concept DOI: always resolves to the newest version. Each
-      release also has its own version DOI, shown on the Zenodo
-      record page, for pinning the exact data used.
+# The concept DOI, which always resolves to the newest version; each release
+# also has its own version DOI, shown on the Zenodo record page. It has to be
+# this top-level key: GitHub's renderer reads `doi` and never `identifiers`,
+# and otherwise falls back to `repository-code`, which outranks `url`.
+doi: 10.5281/zenodo.22162057
 repository-code: 'https://github.com/danradice/yle-uutiset-taajuussanakirja'
-url: 'https://doi.org/10.5281/zenodo.22162057'
 abstract: >-
   Corpus frequencies for the headwords of the Kotus nykysuomen
   sanalista, counted against the Yle Finnish News Archive
@@ -43,22 +40,6 @@ keywords:
 license: CC-BY-4.0
 version: 1.1.1
 date-released: '2026-08-31'
-preferred-citation:
-  type: data
-  title: >-
-    Yle Uutisten taajuussanakirja — a news-based Finnish frequency
-    dictionary
-  authors:
-    - given-names: Daniel
-      family-names: Radice
-      affiliation: University of Helsinki
-      orcid: 'https://orcid.org/0009-0002-5206-6880'
-  year: 2026
-  version: 1.1.1
-  publisher:
-    name: Zenodo
-  doi: 10.5281/zenodo.22162057
-  url: 'https://doi.org/10.5281/zenodo.22162057'
 references:
   - type: database
     title: 'Yle Finnish News Archive 2011-2024, scrambled, VRT'

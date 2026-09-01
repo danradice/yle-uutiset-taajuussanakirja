@@ -36,9 +36,12 @@ Citation metadata only. **No dictionary data changed** — every file under
 
 ### Changed
 
-- `CITATION.cff` gains that concept DOI, an ORCID and an affiliation, and a
-  `preferred-citation` block naming Zenodo as the publisher — so GitHub's "Cite
-  this repository" button and the Zenodo record now render the same citation.
+- `CITATION.cff` gains that concept DOI as its top-level `doi`, plus an ORCID and
+  an affiliation, so the "Cite this repository" button prints the DOI instead of
+  the repository URL. Its renderer reads `doi` and never `identifiers`, and
+  otherwise falls back to `repository-code`. The button's string still differs
+  from Zenodo's in styling — it writes `[Data set]` and prints no publisher for a
+  dataset, which no CFF field can change.
 - The attribution notice in `README.md` and `NOTICE` is labelled as the licence
   notice it is, rather than as "a suitable citation", and the Kotus *nykysuomen
   sanalista* is recorded as CC BY 4.0 rather than an unversioned CC BY.

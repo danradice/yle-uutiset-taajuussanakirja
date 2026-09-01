@@ -133,12 +133,28 @@ the newest release.
 
 Two files describe a release, to two different services, and they must agree.
 
-`CITATION.cff` is what GitHub's "Cite this repository" button renders; its
-`preferred-citation` block is what makes that button print the DOI and name
-Zenodo as publisher, since CFF has no top-level `publisher`. The DOI it carries
-is the **concept** DOI (`10.5281/zenodo.22162057`), which resolves to the newest
-version — a version DOI cannot live in the repo, because Zenodo only mints it
-once the tag has been published.
+`CITATION.cff` is what GitHub's "Cite this repository" button renders, via the
+`cff` Ruby gem. Two facts about that renderer decide the file's shape, both
+learned the hard way from its source:
+
+- It takes the citation's URL from `repository-code` in preference to `url`, and
+  overrides both only when the **top-level `doi:` key** is set. `identifiers:` is
+  never consulted for the DOI. So the DOI has to be that key, or the button
+  prints the GitHub URL and no DOI at all.
+- Its APA output prints a publisher only for `type: book`, and its BibTeX maps a
+  dataset to `@misc`, which has no publisher field. **Nothing in CFF can make the
+  button say "Zenodo"**, `preferred-citation` included — the rendered string
+  differs from the Zenodo record's by that word and by `[Data set]` against
+  `[Dataset]`, and that is formatter styling, not a metadata error. Do not try to
+  fix it by declaring a different `type`: it would misdescribe the dataset and
+  lose the `[Data set]` label.
+
+The DOI is the **concept** DOI (`10.5281/zenodo.22162057`), which resolves to the
+newest version — a version DOI cannot live in the repo, because Zenodo only mints
+it once the tag has been published.
+
+To see exactly what the button will show: `gem install cff`, then
+`ruby -EUTF-8 -r cff -e 'puts CFF::File.read("CITATION.cff").to_apalike'`.
 
 `.zenodo.json` drives the Zenodo record. It exists because Zenodo's CFF reader
 maps just six fields (title, authors, abstract, keywords, license, message) and
