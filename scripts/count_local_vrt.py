@@ -11,31 +11,28 @@ by frequency descending then headword. The output is tab-separated, with columns
                A word class carried by more than one sense (i.e. the lemma has
                several meanings of that same part of speech) is flagged with a
                trailing asterisk, e.g. "substantiivi*, adjektiivi".
-  count      - total corpus occurrences of that lemma, POS ignored (all word
-               classes merged). Only lemmas in the wordlist are counted, which
-               keeps memory bounded across the whole 14-year dataset.
+  count      - corpus occurrences of that lemma, POS ignored (all word
+               classes merged), counted over the sentences that
+               vrt_sentences.iter_kept_tokens() keeps: each distinct sentence
+               once, with alt texts, robot texts and reviewed boilerplate
+               removed and short plain sentences protected (see that module).
+               Only lemmas in the wordlist are counted, which keeps memory
+               bounded across the whole 14-year dataset.
 
 POS is deliberately not used to split counts: the sanalista already fixes each
 lemma's word class(es), and trusting the corpus tagger only fragments a lemma's
 counts across spurious classes (e.g. bogus "Foreign" tags).
 
-YLENEWS VRT columns are: word, ref, lemma, lemmacomp, pos, msd, dephead,
-deprel, lex - note lemma is field index 2 and pos is index 4 (not 3, that's
-lemmacomp). Punct tokens are dropped.
+VRT parsing and the repetition rules live in vrt_sentences.py. Punct tokens
+are never counted.
 """
 
 import csv
-import sys
 from collections import Counter, defaultdict
-from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
+from vrt_sentences import ROOT, VRT_ROOTS, iter_kept_tokens, report, vrt_files
+
 WORDLIST = ROOT / "word_lists/nykysuomensanalista2024.txt"
-VRT_ROOTS = [
-    ROOT / "corpora/ylenews-fi-2011-2018-s-vrt/vrt",
-    ROOT / "corpora/ylenews-fi-2019-2021-s-vrt/vrt",
-    ROOT / "corpora/ylenews-fi-2022-2024-s-vrt/data",
-]
 OUTPUT = ROOT / "auxiliary_data/lemma_counts_merged_2011_2024.tsv"
 
 
@@ -84,35 +81,20 @@ def load_wordlist(path):
     return order, senses
 
 
-def count_file(vrt_path, target_lemmas, counts):
-    with open(vrt_path, encoding="utf-8") as f:
-        for line in f:
-            if line.startswith("<"):
-                continue
-            fields = line.rstrip("\n").split("\t")
-            if len(fields) < 5:
-                continue
-            lemma = fields[2]
-            pos = fields[4]
-            if pos == "Punct" or lemma not in target_lemmas:
-                continue
-            counts[lemma] += 1
-
-
 def main():
     order, senses = load_wordlist(WORDLIST)
     target_lemmas = set(senses)
     print(f"Loaded {len(order)} unique headwords from {WORDLIST}")
 
-    vrt_files = sorted(
-        f for root in VRT_ROOTS for f in root.glob("**/*.vrt")
-    )
-    print(f"Found {len(vrt_files)} VRT files across {len(VRT_ROOTS)} roots")
+    paths = vrt_files()
+    print(f"Found {len(paths)} VRT files across {len(VRT_ROOTS)} roots")
 
     counts = Counter()
-    for i, vrt_path in enumerate(vrt_files, 1):
-        count_file(vrt_path, target_lemmas, counts)
-        print(f"[{i}/{len(vrt_files)}] processed {vrt_path}", file=sys.stderr)
+    stats = Counter()
+    for lemma, _ in iter_kept_tokens(paths, stats):
+        if lemma in target_lemmas:
+            counts[lemma] += 1
+    report(stats)
 
     rows = [
         (lemma, format_sanaluokat(senses[lemma]), count)

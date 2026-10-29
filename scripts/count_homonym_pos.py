@@ -15,7 +15,9 @@ by the tagger's pos code (N, V, A, Adv, ...), and writes a tab-separated table:
 
   Hakusana - the homonym headword/lemma.
   pos      - the VRT pos code the tagger assigned.
-  count    - occurrences of the lemma under that pos, 2011-2024. An expected
+  count    - occurrences of the lemma under that pos, 2011-2024, over the
+             same sentences count_local_vrt.py counts (vrt_sentences.py), so
+             a lemma's per-pos counts sum to its merged total. An expected
              pos code that never occurs in the corpus still gets a row, with
              count 0, so every word class the sanalista lists is represented.
   expected - "yes" if `pos` is one of the codes the sanalista's word classes for
@@ -25,22 +27,16 @@ by the tagger's pos code (N, V, A, Adv, ...), and writes a tab-separated table:
 
 Rows are sorted by headword, then count descending within each headword.
 
-YLENEWS VRT columns: word, ref, lemma, lemmacomp, pos, msd, dephead, deprel,
-lex - lemma is field index 2, pos is index 4. Punct tokens are dropped.
+VRT parsing and the repetition rules live in vrt_sentences.py. Punct tokens
+are never counted.
 """
 
 import csv
-import sys
 from collections import Counter, defaultdict
-from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
+from vrt_sentences import ROOT, VRT_ROOTS, iter_kept_tokens, report, vrt_files
+
 WORDLIST = ROOT / "word_lists/nykysuomensanalista2024.txt"
-VRT_ROOTS = [
-    ROOT / "corpora/ylenews-fi-2011-2018-s-vrt/vrt",
-    ROOT / "corpora/ylenews-fi-2019-2021-s-vrt/vrt",
-    ROOT / "corpora/ylenews-fi-2022-2024-s-vrt/data",
-]
 OUTPUT = ROOT / "auxiliary_data/homonym_pos_counts_2011_2024_raw.tsv"
 
 # Sanaluokka (sanalista word class) -> VRT/Korp pos code(s). The corpus does not
@@ -104,32 +100,19 @@ def load_target_lemmas(path):
     return targets
 
 
-def count_file(vrt_path, target_lemmas, counts):
-    with open(vrt_path, encoding="utf-8") as f:
-        for line in f:
-            if line.startswith("<"):
-                continue
-            fields = line.rstrip("\n").split("\t")
-            if len(fields) < 5:
-                continue
-            lemma = fields[2]
-            pos = fields[4]
-            if pos == "Punct" or lemma not in target_lemmas:
-                continue
-            counts[(lemma, pos)] += 1
-
-
 def main():
     targets = load_target_lemmas(WORDLIST)
     print(f"Loaded {len(targets)} multi-pos homonym lemmas from {WORDLIST}")
 
-    vrt_files = sorted(f for root in VRT_ROOTS for f in root.glob("**/*.vrt"))
-    print(f"Found {len(vrt_files)} VRT files across {len(VRT_ROOTS)} roots")
+    paths = vrt_files()
+    print(f"Found {len(paths)} VRT files across {len(VRT_ROOTS)} roots")
 
     counts = Counter()
-    for i, vrt_path in enumerate(vrt_files, 1):
-        count_file(vrt_path, targets, counts)
-        print(f"[{i}/{len(vrt_files)}] processed {vrt_path}", file=sys.stderr)
+    stats = Counter()
+    for lemma, pos in iter_kept_tokens(paths, stats):
+        if lemma in targets:
+            counts[(lemma, pos)] += 1
+    report(stats)
 
     rows = [
         (lemma, pos, count, "yes" if pos in targets[lemma] else "no")
