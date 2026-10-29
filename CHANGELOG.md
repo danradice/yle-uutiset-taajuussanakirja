@@ -14,6 +14,79 @@ numbers:
 Each released version is tagged `vX.Y.Z`, and the section below the matching
 heading is what ships as the GitHub release notes.
 
+## [2.0.0] - 2026-10-29
+
+A recount with repeated text removed, and a re-reviewed homonym split. **Every
+count changes**, which is why this is a major version.
+
+### Changed
+
+- **Each distinct sentence is now counted once.** Before, every token in the
+  archive was counted, but much of the archive repeats itself. The new rules
+  live in `scripts/vrt_sentences.py`, shared by every counting script:
+  - Dropped entirely: image alt texts, Voitto robot sports texts and Yle
+    Selkouutiset.
+  - Dropped as repeats: copies of an article's headline, lead and caption that
+    the archive stores twice, and every other exact repeat of a sentence.
+  - Kept every time: short plain body sentences (at most 4 words), which
+    genuinely recur ("Päinvastoin.", "En tiedä."), unless they are on a reviewed
+    boilerplate stoplist.
+  - Counted once however many numbers they carry: reviewed number templates,
+    such as comment-moderation footers and programme schedules.
+
+  Of 296.6 M non-punctuation tokens, 81.9% are kept:
+
+  | Removed | Share of tokens |
+  |---|---|
+  | serialisation copies | 10.4% |
+  | other repeats | 3.5% |
+  | alt texts | 3.2% |
+  | Selkouutiset | 0.5% |
+  | robot texts | 0.4% |
+  | number templates | 0.1% |
+
+  Wordlist-lemma tokens fall from 235.3 M to 196.9 M. The biggest falls are
+  boilerplate vocabulary:
+
+  | Lemma | 1.x | 2.0.0 |
+  |---|---|---|
+  | `kuvituskuva` | 55 754 | 1 961 |
+  | `keltainen` | 37 147 | 6 869 |
+  | `lukea` | 253 362 | 84 082 |
+  | `vaihto` | 45 802 | 16 510 |
+
+  Core vocabulary falls roughly in line with the corpus (`olla` −12%).
+- **7 homonyms are split instead of 43.** A homonym is now split only if its
+  genuine second sense would make the top 10 000 on its own: `aika`, `päästä`,
+  `koko`, `juuri`, `kuusi`, `kohta`, `panna`. Below that a split only moved
+  tagger noise around. The review also found tokens that the corpus assigns to
+  the wrong headword, and these are now dropped from the homonym: `vasta` loses
+  39 528 tokens of *vastaan*/*vastassa*, and `voi` 1 601 forms of *voida* and
+  *voitto*. Two 1.x decisions were wrong and are reversed, including `päästä`/N,
+  which is the verbal noun *pääseminen* and is now counted with the verb, not
+  the postposition. Decisions and evidence:
+  `auxiliary_data/homonym_processing_notes.md` and `homonym_pos_examples.md`.
+- The dictionary has **87 644 attested headwords** in 87 651 rows (1.x: 87 870
+  rows). 183 rare lemmas attested only in alt texts or boilerplate drop out.
+- The top-10 000 list covers **95.15%** of counted tokens (1.x: 94.95%). It holds
+  9 993 distinct lemmas, and its cutoff count is 1 081. 9 724 of its lemmas were
+  also in the 1.x list.
+
+### Added
+
+- `scripts/vrt_sentences.py` (the shared reader) and
+  `scripts/list_boilerplate_candidates.py`, which lists repeated short sentences
+  and number templates for review.
+- `auxiliary_data/boilerplate_*.tsv`: the candidate lists with their review
+  marks, and the two reviewed lists the counter reads.
+
+### Known issues
+
+- Tokens the corpus assigns to the wrong headword are removed from homonyms but
+  not credited to their real headword. `vastassa` (~5 200 missing), `kokoon`
+  (~3 000) and `koolle` (~3 000) are undercounted, and lemmas that were never
+  broken down by tag may contain similar errors.
+
 ## [1.1.1] - 2026-08-31
 
 Citation metadata only. **No dictionary data changed** — every file under

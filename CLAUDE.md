@@ -10,13 +10,77 @@ using token counts from the Yle Finnish News Archive (YLENEWS_FI) 2011–2024.
 
 ## Pipeline
 
-Two ordered stages under `scripts/`, plus a manual disambiguation step between
-them. Stage 2 produces the deliverable.
+Two ordered stages under `scripts/`. A manual boilerplate review comes before
+them, and a manual homonym review sits between them. Stage 2 produces the
+deliverable.
+
+### Repetition removal — `vrt_sentences.py`
+
+The archive repeats a lot of text, and almost all of the repetition is at the
+level of sentences: only 12 of 1 043 653 text ids repeat. All three counting
+scripts therefore read the corpus through `vrt_sentences.iter_kept_tokens()`.
+It counts **each distinct sentence once**, applying these rules in order:
+
+- **Whole texts dropped:**
+  - texts from `Yle Selkouutiset` (simplified Finnish);
+  - texts written by Yle's Voitto robot, recognised by its sign-off "Voitto-robotin tekemästä".
+- **Sentences dropped:**
+  - image alt texts (`type` `alt` or `heading-alt`);
+  - serialisation copies: within one text, a sentence repeated in a *different* field. The JSON harvest emits the headline block, the lead and the caption twice.
+- **Every other repeat** of a sentence, within a text or across texts, is dropped, except:
+  - **protected short sentences**: at most `SHORT_MAX` = 4 tokens, body text, no `*`/`_` markup, and not on the stoplist. These recur naturally ("Päinvastoin.", "En tiedä."), so every occurrence counts;
+  - **reviewed numeric templates**: a sentence whose digit-masked form is on the template list counts once *however many numbers it carries*. This covers comment-moderation footers, programme schedules and election pages. Masking is not global: few-variant formulas such as "Ottelua seurasi N katsojaa" stay exact-matched.
+
+Sentence identity is the lowercased non-`Punct` word forms joined by spaces. The
+first occurrence in (chronological) file order is the one kept. The 2.0.0
+recount kept 81.9% of 296.6 M non-`Punct` tokens:
+
+| Outcome | Share of tokens |
+|---|---|
+| serialisation copies | 10.4% |
+| other repeats | 3.5% |
+| alt texts | 3.2% |
+| Selkouutiset | 0.5% |
+| robot texts | 0.4% |
+| templates | 0.1% |
+
+Method relative to the Leipzig Corpora Collection (Quasthoff, Richter &
+Biemann 2006), which removes duplicates and number-only near-duplicates at every
+length: this method keeps genuine short repeats, masks numbers only for reviewed
+templates, and uses the VRT's structure rather than form-based filters.
+
+### Manual step — the boilerplate review (`list_boilerplate_candidates.py`)
+
+`list_boilerplate_candidates.py` (slow) writes two candidate files to
+`auxiliary_data/`:
+
+- `boilerplate_candidates_short.tsv`: protectable sentences with at least 10 copies;
+- `boilerplate_candidates_numeric.tsv`: digit-masked keys with at least 10 distinct variants.
+
+Both keep only rows that contain a wordlist lemma.
+
+Each row gets a rule-based `suggest`/`reason`:
+
+| Reason | Meaning |
+|---|---|
+| `nav` | navigation, promotion or edit note |
+| `label` | a colon, no sentence-final punctuation, or a template with fewer than 3 non-numeric words |
+| `burst` | all copies within 3 years |
+| `section` | at least 95% of copies outside the general news and sports sections |
+
+The reviewer marks the rows to drop in `drop`. For 2.0.0 that was every
+`nav` and `label` suggestion and none of `burst` or `section`, giving 734 short
+rows and 1 040 templates. `--resuggest` recomputes the suggestions in place.
+`--build-lists` then writes the two reviewed lists the counter reads:
+`boilerplate_short_sentences.tsv` (the stoplist) and
+`boilerplate_numeric_templates.tsv`. Both counting scripts exit if either list
+is missing, so a recount cannot silently skip the review.
 
 ### Stage 1 — `count_local_vrt.py`
 
 Scans the locally-downloaded YLENEWS VRT files and counts each lemma's
-occurrences, **POS ignored** (all word classes merged), but only for lemmas
+occurrences over the kept sentences, **POS ignored** (all word classes merged),
+but only for lemmas
 present in the wordlist (keeps memory bounded across the 14-year dataset). It
 writes one row per attested headword (zero-count headwords are dropped), sorted
 by frequency descending then headword, to the **tab-separated** intermediate
@@ -42,12 +106,27 @@ issues").
 
 Merging is wrong for the homonyms whose senses are genuinely *different* parts
 of speech (e.g. `panna` = verb "to put" vs. noun "a ban"), so those totals are
-split back out by hand. `count_homonym_pos.py` produces the raw material —
-per-POS corpus counts for the homonyms whose senses map to more than one VRT pos
-code, with an `expected` flag marking tagger POS the sanalista does not list.
-That output is saved as `auxiliary_data/homonym_pos_counts_2011_2024_raw.tsv` and reviewed manually (mistagged buckets folded into the correct POS,
-resolved lemmas dropped) to yield
-`auxiliary_data/homonym_pos_counts_2011_2024_ready.tsv`.
+split back out by hand. `count_homonym_pos.py` produces the raw material. It
+gives per-POS corpus counts for the 61 homonyms whose senses map to more than
+one VRT pos code, with an `expected` flag marking tagger POS that the sanalista
+does not list. That output is saved as
+`auxiliary_data/homonym_pos_counts_2011_2024_raw.tsv` and reviewed by hand to
+yield `auxiliary_data/homonym_pos_counts_2011_2024_ready.tsv`.
+
+**Criterion:** a homonym is split only if its *genuine* minority sense is at
+least the top-10 000 cutoff count (1 080 in 2.0.0). Only then does the second
+sense become its own learner-list entry; below that a split only moves tagger
+noise around. 2.0.0 splits 7 lemmas: `aika`, `päästä`, `koko`, `juuri`,
+`kuusi`, `kohta` and `panna`.
+
+**The review handles whole tag buckets, not word forms.** Each bucket is either:
+- **folded** into another POS of the same lemma, when it is the same word mistagged; or
+- **dropped** (a `pos` of `-`), when it is a different headword mis-lemmatised onto this one, or a proper name.
+
+Dropped tokens are *not* moved to the headword they belong to. Four lemmas are
+corrected this way without being split: `vasta`, `voi`, `rikki` and `vuoksi`.
+The decisions, and the leakage knowingly left in, are in
+`homonym_processing_notes.md`.
 
 ### Stage 2 — `split_homonym_counts.py`
 
@@ -58,7 +137,10 @@ three columns as stage 1). The ready file's VRT pos codes are mapped back to the
 sanalista's Finnish class names, choosing among *that lemma's own* classes —
 which resolves `Num` (numeraali vs. järjestysluku) and `Adp` (postpositio vs.
 prepositio). It warns when a lemma's split counts do not sum to its merged
-total, which catches arithmetic slips in the manual step.
+total, which catches arithmetic slips in the manual step. Dropped (`-`) rows
+count toward that sum but are not written out. A lemma left with a single kept
+row has been corrected rather than split, so it keeps its merged `Sanaluokat`
+label.
 
 The dictionary must always be rebuilt from the stage 1 list: stage 2 is not
 idempotent on its own output, since an already-split lemma has no single row to
@@ -75,7 +157,7 @@ postpositio") appears in **every** matching subdictionary carrying its **full**
 count — the corpus count behind such a lemma was never split between its
 classes, so the merged total is the only honest figure. **The subdictionaries
 therefore overlap and their counts must never be summed across files**, which
-would double-count the 1384 multi-class lemmas. The `Sanaluokat` column is
+would double-count the 1 419 multi-class lemmas. The `Sanaluokat` column is
 carried over so any row shows whether its count is shared.
 
 Rows whose `Sanaluokat` is blank (forms the sanalista lists without a word
@@ -92,9 +174,9 @@ release attaches.
 The dictionary is already sorted, so this is `rows[:TOP_N]` — a head, not a
 re-sort, which means the top list cannot disagree with the dictionary. Same
 three columns, no `rank` (the homonym split puts some lemmas on two rows and
-ties leave rank ambiguous). It prints coverage (94.95% of tokens), the distinct
-lemma count (9 986 lemmas in 10 000 rows), and a warning when the positional
-cutoff falls inside a run of equal counts — currently 3 rows share count 1 361
+ties leave rank ambiguous). It prints coverage (95.15% of tokens), the distinct
+lemma count (9 993 lemmas in 10 000 rows), and a warning when the positional
+cutoff falls inside a run of equal counts — currently 6 rows share count 1 081
 and fall outside.
 
 Both files sit under GitHub's 512 KB limit for rendering tabular data, so they
@@ -197,6 +279,8 @@ columns, PATCH for corrections.
 ### Commands
 
 ```bash
+python3 scripts/list_boilerplate_candidates.py  # boilerplate candidates (slow; feeds the review)
+python3 scripts/list_boilerplate_candidates.py --build-lists  # reviewed lists from the `drop` column (fast)
 python3 scripts/count_local_vrt.py            # stage 1 (slow; reads all VRT files)
 python3 scripts/count_homonym_pos.py          # homonym per-POS counts (slow; feeds the manual step)
 python3 scripts/split_homonym_counts.py       # stage 2 — builds the final dictionary (fast)
@@ -227,11 +311,16 @@ root via `ROOT = Path(__file__).resolve().parent.parent`, not the CWD.
     stage 2's input.
   - `homonym_pos_examples.md` — example sentences pulled from the VRT for
     lemma/POS combinations needing review, with the conclusions drawn from them.
-  - `homonym_processing_notes.md` — the resulting manual decisions: which
-    buckets were redistributed into which POS, and which lemmas were removed.
+  - `homonym_processing_notes.md` — the resulting manual decisions: the split
+    criterion, which buckets were folded into which POS, and which were dropped.
+  - `boilerplate_candidates_{short,numeric}.tsv` — `list_boilerplate_candidates.py`
+    output with the reviewer's `drop` marks.
+  - `boilerplate_short_sentences.tsv` (the protection stoplist) and
+    `boilerplate_numeric_templates.tsv` — the reviewed lists that
+    `vrt_sentences.py` reads, as `key, example, copies`.
 - `corpora/ylenews-fi-{2011-2018,2019-2021,2022-2024}-s-vrt/` — the three
   downloaded VRT packages. VRT lives under `vrt/` for the first two and `data/`
-  for the third; `VRT_ROOTS` in the scripts hard-codes these paths.
+  for the third; `VRT_ROOTS` in `scripts/vrt_sentences.py` hard-codes these paths.
 
 ### YLENEWS VRT column order
 
@@ -258,6 +347,31 @@ was the noun (sports slang "shot") mistagged, and `läpi`/N, `lähin`/Adv and
 `kiltti`/N contained none of the noun/adverb senses their tags claimed. An
 `expected=yes` flag therefore does **not** vindicate a bucket — the sanalista
 listing a noun sense does not mean the tagged tokens are that noun.
+
+**Mis-lemmatisation across headwords.** The corpus lemma field sometimes names
+the wrong headword, and stage 1 counts the token under that lemma. It surfaces
+only where the homonym review breaks a lemma down by tag. For example, 83% of
+`vasta`/N is *vastaan* and 13% is *vastassa*; `koko`/N contains *kokoon* and
+*koolle*; most of `voi` is *voida*. Dropping those tokens from the homonym does
+not restore them to their own headword, so the following stay undercounted
+(about 1/5 of the corpus sampled; missing tokens are estimates):
+
+| Headword | Stage 1 count | Missing tokens (est.) |
+|---|---|---|
+| `vastassa` | 987 | ~5 200 |
+| `kokoon` | 300 | ~3 000 |
+| `koolle` | 55 | ~3 000 |
+| `vastaan` | 164 408 | ~33 000 |
+
+Lemmas never broken down by tag may hide similar errors.
+
+**Repetition in the archive.** This is why counting goes through
+`vrt_sentences.py` (see "Repetition removal" above). Before 2.0.0, every token
+was counted. That inflated photo and caption vocabulary
+(`kuvituskuva` 55 754 → 1 961), robot sports templates (`keltainen` 37 147 → 6 869,
+`vaihto` 45 802 → 16 510), navigation lines (`lukea` 253 362 → 84 082) and
+moderation footers (`keskustella` 86 979 → 60 971). 183 rare lemmas attested only
+in alt texts or boilerplate dropped out of the dictionary.
 
 ## Korp API
 

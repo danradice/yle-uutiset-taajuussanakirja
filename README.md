@@ -9,23 +9,23 @@ counted against the **Yle Finnish News Archive (YLENEWS_FI) 2011–2024**.
 
 The deliverable is
 [`frequency_dicts/taajuussanakirja_ylenews_2011_2024.tsv`](frequency_dicts/taajuussanakirja_ylenews_2011_2024.tsv):
-**87 870 attested headwords**, tab-separated, sorted by frequency descending
-then headword. Headwords with zero corpus occurrences are dropped (the sanalista
+**87 644 attested headwords** in 87 651 rows, tab-separated, sorted by frequency
+descending then headword. Headwords with zero corpus occurrences are dropped (the sanalista
 lists 104 742 in total).
 
 ```
 Hakusana	Sanaluokat	count
-olla	verbi	15149528
-ja	konjunktio, adverbi	8009977
-se	pronomini	3740116
-ei	kieltoverbi, substantiivi	3312474
-että	konjunktio	2616520
+olla	verbi	13287878
+ja	konjunktio, adverbi	6724641
+se	pronomini	3464861
+ei	kieltoverbi, substantiivi	2903052
+että	konjunktio	2423703
 ```
 
 ## Download
 
-**Most people want the top 10 000.** It covers **94.95%** of everything in the
-corpus, renders as a browsable table right here on GitHub, and needs no
+**Most people want the top 10 000.** It covers **95.15%** of everything counted
+in the corpus, renders as a browsable table right here on GitHub, and needs no
 unzipping:
 
 | | Direct link | For |
@@ -37,14 +37,14 @@ Those release links always resolve to the newest version, so they are safe to
 put on a course page and forget.
 
 Two things to know about the list. The cutoff is **positional**: rank 10 000 has
-count 1 361 and three further rows share that count, so they fall outside the
-list despite being no less frequent. And it is 10 000 *rows*, which is 9 986
-distinct lemmas — 14 words appear twice because the homonym split gives them one
+count 1 081 and six further rows share that count, so they fall outside the
+list despite being no less frequent. And it is 10 000 *rows*, which is 9 993
+distinct lemmas — 7 words appear twice because the homonym split gives them one
 row per word class.
 
 **For everything else**, take the *Source code* archive from the
 [latest release](https://github.com/danradice/yle-uutiset-taajuussanakirja/releases/latest),
-or just clone. It holds the full 87 870-row dictionary, all 15 subdictionaries,
+or just clone. It holds the full 87 651-row dictionary, all 15 subdictionaries,
 the build scripts and the intermediate counts — 2.4 MB compressed.
 
 ### File formats
@@ -52,7 +52,7 @@ the build scripts and the intermediate counts — 2.4 MB compressed.
 Every `.tsv` here is UTF-8 with **LF** line endings and needs no quoting: no
 field contains a tab, so splitting on `\t` is always correct. The `.csv` is the
 single exception — UTF-8 **with a BOM** and **CRLF** endings, as RFC 4180
-specifies and Excel expects, with the 1 384 comma-bearing `Sanaluokat` values
+specifies and Excel expects, with the 435 comma-bearing `Sanaluokat` values
 quoted. If you are scripting, prefer the TSV.
 
 ### Columns
@@ -61,7 +61,7 @@ quoted. If you are scripting, prefer the TSV.
 |---|---|
 | `Hakusana` | The headword / lemma, exactly as the sanalista spells it. |
 | `Sanaluokat` | The word class(es) the **sanalista** assigns to the lemma — not the corpus tagger's guess. Comma-separated, deduped, in first-appearance order. May be empty for the handful of forms the sanalista lists without a class. |
-| `count` | Total corpus occurrences of the lemma. |
+| `count` | Corpus occurrences of the lemma, with repeated text counted once — see [What was counted](#what-was-counted). |
 
 **The asterisk in `Sanaluokat`** marks a class carried by *more than one sense* —
 the lemma has several distinct meanings of that same part of speech. `joka`
@@ -70,14 +70,36 @@ the lemma has several distinct meanings of that same part of speech. `joka`
 
 **Counts are POS-merged by default.** A lemma's `count` is every corpus token of
 that lemma regardless of how the tagger classified it — see
-[Why POS is ignored](#why-pos-is-ignored). The exception is the 43 homonyms whose
-senses are genuinely different parts of speech, which were split by hand and
-appear as one row per class:
+[Why POS is ignored](#why-pos-is-ignored). The exception is 7 homonyms whose senses
+are genuinely different parts of speech and whose second sense is frequent
+enough to make the top 10 000 on its own (`aika`, `päästä`, `koko`, `juuri`,
+`kuusi`, `kohta`, `panna`). They were split by hand and appear as one row per
+class:
 
 ```
-panna	verbi	22175
-panna	substantiivi	2028
+panna	verbi	18570
+panna	substantiivi	1554
 ```
+
+## What was counted
+
+The news archive repeats a great deal of text, so since 2.0.0 **each distinct
+sentence is counted once**:
+
+- **Excluded entirely:** image alt texts, texts written by Yle's Voitto sports
+  robot, and Yle Selkouutiset (news in simplified Finnish).
+- **Dropped as repeats:**
+  - copies of the headline, lead and caption that the archive stores twice
+    within an article;
+  - navigation and promotion lines ("Lue myös", "Kuvituskuva");
+  - templates that differ only in their numbers, such as comment-moderation
+    footers and programme schedules.
+- **Kept every time:** short sentences that people genuinely write again and
+  again ("Päinvastoin.", "En tiedä.", "Kukaan ei loukkaantunut.").
+
+This keeps 81.9% of the archive's 296.6 M word tokens. The method resembles
+the Leipzig Corpora Collection's sentence deduplication, but it keeps genuine
+short repeats and masks numbers only for reviewed templates.
 
 ## Word-class subdictionaries
 
@@ -86,11 +108,11 @@ same data split into one file per word class, same three columns, same ordering.
 
 | File | Rows | | File | Rows |
 |---|---:|---|---|---:|
-| `taajuussanakirja_substantiivi.tsv` | 65 415 | | `taajuussanakirja_pronomini.tsv` | 62 |
-| `taajuussanakirja_adjektiivi.tsv` | 9 526 | | `taajuussanakirja_prepositio.tsv` | 53 |
-| `taajuussanakirja_verbi.tsv` | 9 169 | | `taajuussanakirja_konjunktio.tsv` | 34 |
-| `taajuussanakirja_adverbi.tsv` | 4 413 | | `taajuussanakirja_luokittelematon.tsv` | 15 |
-| `taajuussanakirja_postpositio.tsv` | 293 | | `taajuussanakirja_kieltoverbi.tsv` | 12 |
+| `taajuussanakirja_substantiivi.tsv` | 65 266 | | `taajuussanakirja_pronomini.tsv` | 62 |
+| `taajuussanakirja_adjektiivi.tsv` | 9 507 | | `taajuussanakirja_prepositio.tsv` | 53 |
+| `taajuussanakirja_verbi.tsv` | 9 163 | | `taajuussanakirja_konjunktio.tsv` | 34 |
+| `taajuussanakirja_adverbi.tsv` | 4 403 | | `taajuussanakirja_luokittelematon.tsv` | 15 |
+| `taajuussanakirja_postpositio.tsv` | 294 | | `taajuussanakirja_kieltoverbi.tsv` | 12 |
 | `taajuussanakirja_interjektio.tsv` | 168 | | `taajuussanakirja_alistuskonjunktio.tsv` | 6 |
 | `taajuussanakirja_numeraali.tsv` | 131 | | `taajuussanakirja_rinnastuskonjunktio.tsv` | 2 |
 | | | | `taajuussanakirja_jarjestysluku.tsv` | 1 |
@@ -102,7 +124,7 @@ same data split into one file per word class, same three columns, same ordering.
 > postpositio` — appears in **every** matching subdictionary carrying its
 > **full** count. The corpus count behind such a lemma was never split between
 > its classes, so the merged total is the only honest figure to report for
-> either one. Adding the files together double-counts 1 384 multi-class lemmas.
+> either one. Adding the files together double-counts 1 419 multi-class lemmas.
 >
 > The `Sanaluokat` column travels with every row, so you can always see whether
 > a given count is shared: more than one class listed means it is.
@@ -142,7 +164,7 @@ Recounting from scratch requires the three VRT packages (~27 GB), which are
 | `ylenews-fi-2019-2021-s-vrt` | http://urn.fi/urn:nbn:fi:lb-2022082503 |
 | `ylenews-fi-2022-2024-s-vrt` | http://urn.fi/urn:nbn:fi:lb-2025110405 |
 
-`VRT_ROOTS` in [`scripts/count_local_vrt.py`](scripts/count_local_vrt.py)
+`VRT_ROOTS` in [`scripts/vrt_sentences.py`](scripts/vrt_sentences.py)
 expects the VRT under `vrt/` for the first two packages and `data/` for the
 third — the layout the downloads already ship with:
 
@@ -156,15 +178,23 @@ corpora/
 Then:
 
 ```bash
+python3 scripts/list_boilerplate_candidates.py  # boilerplate candidates for review
+python3 scripts/list_boilerplate_candidates.py --build-lists
 python3 scripts/count_local_vrt.py    # stage 1 — slow, reads every VRT file
 python3 scripts/count_homonym_pos.py  # per-POS counts for the manual step
 ```
 
+Before stage 1 sits a **boilerplate review**. Frequently repeated short
+sentences and many-variant number templates are listed with a suggested
+keep/drop, and the rows marked `drop` become the two reviewed lists in
+`auxiliary_data/` that the counter reads. Both lists are committed, and the
+counter refuses to run without them.
+
 Between stage 1 and stage 2 sits a **manual disambiguation step**:
 `count_homonym_pos.py` writes per-POS counts for the multi-class homonyms to
 `auxiliary_data/homonym_pos_counts_2011_2024_raw.tsv`, which is reviewed by hand
-— mistagged buckets folded into the correct class, bogus lemmas dropped — to
-produce the `_ready.tsv` that stage 2 consumes. Both files are committed, so
+— mistagged buckets folded into the correct class, tokens belonging to other
+headwords dropped — to produce the `_ready.tsv` that stage 2 consumes. Both files are committed, so
 this step does not need repeating.
 
 The corpora can alternatively be queried through the
@@ -190,6 +220,13 @@ buckets turned out to be artefacts: `kuti`/A was the verb *kutista*
 mis-lemmatised, `kuti`/Adv was the noun (sports slang for "shot") mistagged, and
 `läpi`/N, `lähin`/Adv and `kiltti`/N contained none of the noun/adverb senses
 their tags claimed.
+
+The review also exposed errors in the corpus's own lemmas. 83% of `vasta`/N is
+really *vastaan* or *vastassa*, `koko`/N contains *kokoon* and *koolle*, and most
+of `voi` is the verb *voida*. Those tokens are removed from the homonym but not
+credited to their real headword, so `vastassa`, `kokoon` and `koolle` are
+undercounted by several thousand each. Lemmas that were never broken down by
+tag may contain similar errors.
 
 The evidence is in
 [`auxiliary_data/homonym_pos_examples.md`](auxiliary_data/homonym_pos_examples.md)
@@ -226,7 +263,7 @@ tag.
 ## How to cite
 
 > Radice, D. (2026). *Yle Uutisten taajuussanakirja — a news-based Finnish
-> frequency dictionary* (Version 1.1.1) [Data set]. Zenodo.
+> frequency dictionary* (Version 2.0.0) [Data set]. Zenodo.
 > <https://doi.org/10.5281/zenodo.22162057>
 
 That is the **concept DOI**, which always resolves to the newest version. Every

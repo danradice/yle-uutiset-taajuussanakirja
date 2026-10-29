@@ -21,6 +21,13 @@ onto it, which resolves the otherwise ambiguous codes (Num -> numeraali vs.
 järjestysluku, Adp -> postpositio vs. prepositio). The trailing asterisk marking
 a class carried by more than one sense is preserved.
 
+A ready row whose pos is DROPPED ("-") holds tokens removed from the lemma
+altogether (another headword mis-lemmatised onto it, or a proper name). It
+counts toward the check that a lemma's rows sum to its merged total, but is not
+written out. A lemma left with a single kept row is corrected rather than split,
+so it keeps its merged Sanaluokat label: the column still lists the sanalista's
+classes, not the one the remaining count was tagged with.
+
 Rows for lemmas not in the ready file pass through untouched. The output is a
 separate file from the stage 1 merged list, so the dictionary is always rebuilt
 from that list rather than from itself (this script is not idempotent on its own
@@ -37,6 +44,7 @@ WORDLIST = ROOT / "word_lists/nykysuomensanalista2024.txt"
 MERGED = ROOT / "auxiliary_data/lemma_counts_merged_2011_2024.tsv"
 READY = ROOT / "auxiliary_data/homonym_pos_counts_2011_2024_ready.tsv"
 OUTPUT = ROOT / "frequency_dicts/taajuussanakirja_ylenews_2011_2024.tsv"
+DROPPED = "-"
 
 SANALUOKKA_TO_POS = {
     "substantiivi": {"N"},
@@ -133,7 +141,11 @@ def main():
                 f"{lemma}: split counts total {split_total} != merged count {count} "
                 f"(difference {split_total - count:+d})"
             )
-        for pos, c in ready[lemma]:
+        kept = [(pos, c) for pos, c in ready[lemma] if pos != DROPPED]
+        if len(kept) == 1:
+            out_rows.append((lemma, sanaluokat, kept[0][1]))
+            continue
+        for pos, c in kept:
             out_rows.append((lemma, label_for(lemma, pos, labels, warnings), c))
 
     missing = sorted(set(ready) - seen)
@@ -148,7 +160,7 @@ def main():
         writer.writerows(out_rows)
 
     added = len(out_rows) - len(freq_rows)
-    print(f"Split {len(seen)} lemmas: {len(freq_rows)} rows -> {len(out_rows)} ({added:+d})")
+    print(f"Processed {len(seen)} lemmas: {len(freq_rows)} rows -> {len(out_rows)} ({added:+d})")
     if warnings:
         print(f"\n{len(warnings)} warning(s):", file=sys.stderr)
         for w in warnings:
