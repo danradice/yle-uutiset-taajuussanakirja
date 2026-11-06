@@ -23,7 +23,7 @@ count changes**, which is why this is a major version.
 
 - **Each distinct sentence is now counted once.** Before, every token in the
   archive was counted, but much of the archive repeats itself. The new rules
-  live in `scripts/vrt_sentences.py`, shared by every counting script:
+  live in `scripts/vrt_sentences.py`, which stage 1 reads the corpus through:
   - Dropped entirely: image alt texts, Voitto robot sports texts and Yle
     Selkouutiset.
   - Dropped as repeats: copies of an article's headline, lead and caption that
@@ -71,14 +71,45 @@ count changes**, which is why this is a major version.
 - The top-10 000 list covers **95.15%** of counted tokens (1.x: 94.95%). It holds
   9 993 distinct lemmas, and its cutoff count is 1 081. 9 724 of its lemmas were
   also in the 1.x list.
+- **The release files' names include the version**, e.g.
+  `taajuussanakirja_top10000_v2.0.0.csv`, so a downloaded copy shows which
+  release it came from. As a result, the old direct links of the form
+  `…/releases/latest/download/taajuussanakirja_top10000.csv` no longer work.
+  Link to the
+  [latest release](https://github.com/danradice/yle-uutiset-taajuussanakirja/releases/latest)
+  page instead.
+- `auxiliary_data/homonym_pos_counts_2011_2024_ready.tsv` can now contain rows
+  whose `pos` is `-`. These hold tokens dropped from a lemma because they belong
+  to another headword or are a proper name. They count toward the check that a
+  lemma's rows sum to its merged total, but `build_dictionary.py` does not write
+  them out. A lemma left with one kept row keeps its merged `Sanaluokat` label.
+- **Releases are gated on their date.** `check_release_metadata.py` now fails a
+  tag run unless the release date is the day the tag is pushed (Europe/Helsinki
+  time). The date is checked in `CITATION.cff`, in `.zenodo.json` and in the
+  version's `CHANGELOG.md` heading. The heading must also match the citation
+  files on every run. A `workflow_dispatch` dry run only warns about the date.
+- `count_local_vrt.py` and `count_homonym_pos.py` are merged into
+  `count_lemmas.py`, which writes both files in one pass over the corpus. That
+  halves the recount time, and a homonym's per-POS counts now sum to its merged
+  count by construction.
+- `split_homonym_counts.py` is renamed `build_dictionary.py`, alongside the
+  other `build_*` stages.
 
 ### Added
 
 - `scripts/vrt_sentences.py` (the shared reader) and
   `scripts/list_boilerplate_candidates.py`, which lists repeated short sentences
   and number templates for review.
+- `scripts/sanalista.py`, which holds the wordlist and word-class helpers that
+  four scripts used to copy.
 - `auxiliary_data/boilerplate_*.tsv`: the candidate lists with their review
   marks, and the two reviewed lists the counter reads.
+
+### Removed
+
+- `scripts/count_local_vrt.py` and `scripts/count_homonym_pos.py`, replaced by
+  `count_lemmas.py`, and `scripts/split_homonym_counts.py`, renamed
+  `build_dictionary.py` (see Changed).
 
 ### Known issues
 

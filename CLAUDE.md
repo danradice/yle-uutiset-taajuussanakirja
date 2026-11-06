@@ -17,8 +17,8 @@ deliverable.
 ### Repetition removal — `vrt_sentences.py`
 
 The archive repeats a lot of text, and almost all of the repetition is at the
-level of sentences: only 12 of 1 043 653 text ids repeat. All three counting
-scripts therefore read the corpus through `vrt_sentences.iter_kept_tokens()`.
+level of sentences: only 12 of 1 043 653 text ids repeat. Stage 1 therefore
+reads the corpus through `vrt_sentences.iter_kept_tokens()`.
 It counts **each distinct sentence once**, applying these rules in order:
 
 - **Whole texts dropped:**
@@ -73,10 +73,10 @@ The reviewer marks the rows to drop in `drop`. For 2.0.0 that was every
 rows and 1 040 templates. `--resuggest` recomputes the suggestions in place.
 `--build-lists` then writes the two reviewed lists the counter reads:
 `boilerplate_short_sentences.tsv` (the stoplist) and
-`boilerplate_numeric_templates.tsv`. Both counting scripts exit if either list
+`boilerplate_numeric_templates.tsv`. Stage 1 exits if either list
 is missing, so a recount cannot silently skip the review.
 
-### Stage 1 — `count_local_vrt.py`
+### Stage 1 — `count_lemmas.py`
 
 Scans the locally-downloaded YLENEWS VRT files and counts each lemma's
 occurrences over the kept sentences, **POS ignored** (all word classes merged),
@@ -84,7 +84,9 @@ but only for lemmas
 present in the wordlist (keeps memory bounded across the 14-year dataset). It
 writes one row per attested headword (zero-count headwords are dropped), sorted
 by frequency descending then headword, to the **tab-separated** intermediate
-`auxiliary_data/lemma_counts_merged_2011_2024.tsv`, with columns:
+`auxiliary_data/lemma_counts_merged_2011_2024.tsv`. In the same pass it writes
+the homonym per-POS counts for the manual step below. The merged file has
+these columns:
 
 - `Hakusana` — the headword/lemma.
 - `Sanaluokat` — the possible word classes for the lemma, taken from the
@@ -106,7 +108,7 @@ issues").
 
 Merging is wrong for the homonyms whose senses are genuinely *different* parts
 of speech (e.g. `panna` = verb "to put" vs. noun "a ban"), so those totals are
-split back out by hand. `count_homonym_pos.py` produces the raw material. It
+split back out by hand. Stage 1 also produces the raw material, in the same pass. It
 gives per-POS corpus counts for the 61 homonyms whose senses map to more than
 one VRT pos code, with an `expected` flag marking tagger POS that the sanalista
 does not list. That output is saved as
@@ -128,7 +130,7 @@ corrected this way without being split: `vasta`, `voi`, `rikki` and `vuoksi`.
 The decisions, and the leakage knowingly left in, are in
 `homonym_processing_notes.md`.
 
-### Stage 2 — `split_homonym_counts.py`
+### Stage 2 — `build_dictionary.py`
 
 Folds the reviewed per-POS counts back in: each affected lemma's single merged
 row is replaced by one row per POS, carrying that POS's count. Writes the final
@@ -290,16 +292,26 @@ columns, PATCH for corrections.
 ```bash
 python3 scripts/list_boilerplate_candidates.py  # boilerplate candidates (slow; feeds the review)
 python3 scripts/list_boilerplate_candidates.py --build-lists  # reviewed lists from the `drop` column (fast)
-python3 scripts/count_local_vrt.py            # stage 1 (slow; reads all VRT files)
-python3 scripts/count_homonym_pos.py          # homonym per-POS counts (slow; feeds the manual step)
-python3 scripts/split_homonym_counts.py       # stage 2 — builds the final dictionary (fast)
+python3 scripts/count_lemmas.py               # stage 1 — merged counts + homonym per-POS counts (slow; one pass over all VRT files)
+python3 scripts/build_dictionary.py           # stage 2 — builds the final dictionary (fast)
 python3 scripts/build_pos_subdictionaries.py  # stage 3 — per-word-class subdictionaries (fast)
 python3 scripts/build_top_list.py             # stage 4 — top-10 000 list, TSV + CSV (fast)
 python3 scripts/check_release_metadata.py     # citation metadata gate (fast)
 ```
 
 Scripts can be run from any directory: all data paths are anchored to the repo
-root via `ROOT = Path(__file__).resolve().parent.parent`, not the CWD.
+root via `ROOT = Path(__file__).resolve().parent.parent`, not the CWD. `ROOT`
+is defined once in `vrt_sentences.py`, and the other scripts import it.
+
+`scripts/` is deliberately flat. The scripts import their two shared modules as
+siblings, so subfolders would need a package and `python3 -m` invocations:
+
+- `vrt_sentences.py` holds corpus reading and the repetition rules.
+- `sanalista.py` holds wordlist loading, `split_classes()`, `SANALUOKKA_TO_POS`
+  and the `Sanaluokat` labels.
+
+Put wordlist or word-class logic in `sanalista.py` rather than copying it: four
+scripts once held their own copies.
 
 ## Data layout & formats
 
@@ -315,7 +327,7 @@ root via `ROOT = Path(__file__).resolve().parent.parent`, not the CWD.
   written by stage 4; the only files a release attaches.
 - `auxiliary_data/` — intermediates and working files, all tab-separated:
   - `lemma_counts_merged_2011_2024.tsv` — stage 1 output (POS merged).
-  - `homonym_pos_counts_2011_2024_raw.tsv` — `count_homonym_pos.py` output.
+  - `homonym_pos_counts_2011_2024_raw.tsv` — `count_lemmas.py`'s per-POS output for the homonyms.
   - `homonym_pos_counts_2011_2024_ready.tsv` — the manually reviewed version,
     stage 2's input.
   - `homonym_pos_examples.md` — example sentences pulled from the VRT for

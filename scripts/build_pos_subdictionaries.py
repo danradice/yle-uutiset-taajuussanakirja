@@ -23,9 +23,10 @@ forms without a word class (`enempää`, `osin`, `vuonna`, ...). They go to
 
 import csv
 from collections import defaultdict
-from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
+from sanalista import split_classes
+from vrt_sentences import ROOT
+
 DICTIONARY = ROOT / "frequency_dicts/taajuussanakirja_ylenews_2011_2024.tsv"
 OUTDIR = ROOT / "frequency_dicts/subdictionaries"
 
@@ -39,14 +40,9 @@ def filename_slug(cls):
     return cls.translate(str.maketrans("äöåÄÖÅ", "aoaAOA"))
 
 
-def split_classes(sanaluokat):
-    """Split a Sanaluokat cell into individual classes, dropping any asterisk."""
-    classes = []
-    for part in (sanaluokat or "").split(","):
-        cls = part.strip().rstrip("*").strip()
-        if cls:
-            classes.append(cls)
-    return classes
+def cell_classes(sanaluokat):
+    """The classes in a Sanaluokat cell, without their asterisks."""
+    return [cls.rstrip("*") for cls in split_classes(sanaluokat)]
 
 
 def main():
@@ -58,7 +54,7 @@ def main():
     by_class = defaultdict(list)
     unassigned = []
     for row in rows:
-        classes = split_classes(row[1])
+        classes = cell_classes(row[1])
         if not classes:
             unassigned.append(row)
             continue
@@ -84,7 +80,7 @@ def main():
             writer.writerows(unassigned)
         print(f"{len(unassigned):>6} rows  {path.name}  (blank Sanaluokat)")
 
-    multi = sum(1 for r in rows if len(split_classes(r[1])) > 1)
+    multi = sum(1 for r in rows if len(cell_classes(r[1])) > 1)
     written = sum(len(v) for v in by_class.values()) + len(unassigned)
     print(
         f"\n{len(rows)} dictionary rows -> {written} rows across "

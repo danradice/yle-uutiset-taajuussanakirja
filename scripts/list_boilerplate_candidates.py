@@ -39,10 +39,10 @@ import re
 import sys
 from collections import Counter
 
+from sanalista import load_wordlist
 from vrt_sentences import (ROOT, is_excluded_publisher, is_robot, iter_texts,
                            masked, vrt_files)
 
-WORDLIST = ROOT / "word_lists/nykysuomensanalista2024.txt"
 OUT_SHORT = ROOT / "auxiliary_data/boilerplate_candidates_short.tsv"
 OUT_NUMERIC = ROOT / "auxiliary_data/boilerplate_candidates_numeric.tsv"
 LIST_SHORT = ROOT / "auxiliary_data/boilerplate_short_sentences.tsv"
@@ -147,13 +147,8 @@ def build_lists():
         print(f"Wrote {len(rows)} reviewed rows to {dst}")
 
 
-def load_wordlist_lemmas():
-    with open(WORDLIST, encoding="utf-8") as f:
-        return {row["Hakusana"] for row in csv.DictReader(f, delimiter="\t")}
-
-
 def main():
-    lemmas = load_wordlist_lemmas()
+    lemmas = set(load_wordlist())
     seen = set()           # hash of every exact key met
     short_count = Counter()  # key hash -> protectable occurrences
     short = {}             # key -> Info, once a protectable key recurs

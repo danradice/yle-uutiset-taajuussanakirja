@@ -1,6 +1,6 @@
 """Build the final frequency dictionary by splitting the merged homonym rows.
 
-Stage 2 of the pipeline. count_local_vrt.py (stage 1) merges every word class
+Stage 2 of the pipeline. count_lemmas.py (stage 1) merges every word class
 under a single lemma total in
 
     auxiliary_data/lemma_counts_merged_2011_2024.tsv        (Hakusana, Sanaluokat, count)
@@ -36,60 +36,15 @@ output: a lemma already split would have no single row to replace).
 
 import csv
 import sys
-from collections import Counter, defaultdict
-from pathlib import Path
+from collections import defaultdict
 
-ROOT = Path(__file__).resolve().parent.parent
-WORDLIST = ROOT / "word_lists/nykysuomensanalista2024.txt"
+from sanalista import SANALUOKKA_TO_POS, class_labels, load_wordlist
+from vrt_sentences import ROOT
+
 MERGED = ROOT / "auxiliary_data/lemma_counts_merged_2011_2024.tsv"
 READY = ROOT / "auxiliary_data/homonym_pos_counts_2011_2024_ready.tsv"
 OUTPUT = ROOT / "frequency_dicts/taajuussanakirja_ylenews_2011_2024.tsv"
 DROPPED = "-"
-
-SANALUOKKA_TO_POS = {
-    "substantiivi": {"N"},
-    "verbi": {"V"},
-    "adjektiivi": {"A"},
-    "adverbi": {"Adv"},
-    "pronomini": {"Pron"},
-    "numeraali": {"Num"},
-    "järjestysluku": {"Num"},
-    "konjunktio": {"C", "CS"},
-    "rinnastuskonjunktio": {"C"},
-    "alistuskonjunktio": {"CS"},
-    "interjektio": {"Interj"},
-    "postpositio": {"Adp"},
-    "prepositio": {"Adp"},
-    "kieltoverbi": {"V"},
-}
-
-
-def split_classes(sanaluokka):
-    """Split a (possibly multi-valued) Sanaluokka field into individual classes."""
-    classes = []
-    for part in (sanaluokka or "").split(","):
-        for tok in part.split("+"):
-            tok = tok.strip()
-            if tok:
-                classes.append(tok)
-    return classes
-
-
-def load_wordlist_labels(path):
-    """lemma -> {class: label}, label carrying '*' if >1 sense has that class."""
-    senses = defaultdict(list)
-    with open(path, encoding="utf-8") as f:
-        for row in csv.DictReader(f, delimiter="\t"):
-            senses[row["Hakusana"]].append(row["Sanaluokka"])
-
-    labels = {}
-    for lemma, fields in senses.items():
-        meanings = Counter()
-        for field in fields:
-            for cls in dict.fromkeys(split_classes(field)):  # distinct per sense
-                meanings[cls] += 1
-        labels[lemma] = {c: c + ("*" if n > 1 else "") for c, n in meanings.items()}
-    return labels
 
 
 def load_ready(path):
@@ -118,7 +73,10 @@ def label_for(lemma, pos, labels, warnings):
 
 
 def main():
-    labels = load_wordlist_labels(WORDLIST)
+    labels = {
+        lemma: class_labels(r["Sanaluokka"] for r in rows)
+        for lemma, rows in load_wordlist().items()
+    }
     ready = load_ready(READY)
     print(f"Loaded per-POS counts for {len(ready)} lemmas from {READY}")
 

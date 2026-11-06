@@ -1,8 +1,7 @@
 """Read the YLENEWS VRT files sentence by sentence, with repetition removed.
 
-Shared by count_local_vrt.py, count_homonym_pos.py and
-list_boilerplate_candidates.py, so that every count is taken over the same
-sentences.
+Shared by count_lemmas.py and list_boilerplate_candidates.py, so that every
+count is taken over the same sentences.
 
 The archive repeats a lot of text, almost all of it at sentence level (repeated
 whole articles are negligible: 12 of 1 043 653 text ids). iter_kept_tokens()

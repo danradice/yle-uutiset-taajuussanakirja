@@ -144,13 +144,19 @@ The intermediate counts are committed, so you can regenerate the dictionary and
 the subdictionaries without downloading anything:
 
 ```bash
-python3 scripts/split_homonym_counts.py       # stage 2 — builds the dictionary
+python3 scripts/build_dictionary.py          # stage 2 — builds the dictionary
 python3 scripts/build_pos_subdictionaries.py  # stage 3 — subdictionaries
 python3 scripts/build_top_list.py             # stage 4 — the top-10 000 list
 ```
 
 Python 3 standard library only; no dependencies. Scripts can be run from any
 directory — paths are anchored to the repo root, not the CWD.
+
+The scripts, by what they need:
+
+| Needs the corpora (slow) | Repo only (fast) | Shared modules | Release |
+|---|---|---|---|
+| `list_boilerplate_candidates.py`, `count_lemmas.py` | `build_dictionary.py`, `build_pos_subdictionaries.py`, `build_top_list.py` | `vrt_sentences.py` (corpus reading and repetition rules), `sanalista.py` (wordlist and word classes) | `check_release_metadata.py` |
 
 > [!IMPORTANT]
 > Stage 2 is **not idempotent on its own output**. It always rebuilds from
@@ -184,8 +190,7 @@ Then:
 ```bash
 python3 scripts/list_boilerplate_candidates.py  # boilerplate candidates for review
 python3 scripts/list_boilerplate_candidates.py --build-lists
-python3 scripts/count_local_vrt.py    # stage 1 — slow, reads every VRT file
-python3 scripts/count_homonym_pos.py  # per-POS counts for the manual step
+python3 scripts/count_lemmas.py      # stage 1 — slow, one pass over every VRT file
 ```
 
 Before stage 1 sits a **boilerplate review**. Frequently repeated short
@@ -195,7 +200,7 @@ keep/drop, and the rows marked `drop` become the two reviewed lists in
 counter refuses to run without them.
 
 Between stage 1 and stage 2 sits a **manual disambiguation step**:
-`count_homonym_pos.py` writes per-POS counts for the multi-class homonyms to
+`count_lemmas.py` also writes per-POS counts for the multi-class homonyms to
 `auxiliary_data/homonym_pos_counts_2011_2024_raw.tsv`, which is reviewed by hand
 — mistagged buckets folded into the correct class, tokens belonging to other
 headwords dropped — to produce the `_ready.tsv` that stage 2 consumes. Both files are committed, so
