@@ -66,8 +66,11 @@ jobs:
       # Zenodo builds the DOI record from .zenodo.json and ignores CITATION.cff
       # whenever it is present, so the two files describe the same release to two
       # services with nothing but this check keeping them in step. A stale version
-      # in either is invisible until it has been published under a DOI.
-      - name: Fail if the citation metadata does not match the tag
+      # in either is invisible until it has been published under a DOI. On a tag
+      # run the release date in both files and the CHANGELOG.md heading must also
+      # be today (Europe/Helsinki), so re-running a failed release on a later day
+      # fails until the date is bumped; workflow_dispatch only warns about it.
+      - name: Fail if the citation metadata does not match the tag and today's date
         run: python3 scripts/check_release_metadata.py "$VERSION"
 
       - name: Publish the release

@@ -264,15 +264,21 @@ which is correct (the publisher is the archive holding the fixed copy).
 `scripts/check_release_metadata.py` is the gate. It fails the release when the
 two files disagree on version or date, when `CITATION.cff` disagrees with itself
 (a `version` restated under `preferred-citation`, a `year` that is not
-`date-released`'s), when the tagged tree link in `.zenodo.json` is stale, or — on
-a tag run — when either file disagrees with the tag. It reads the CFF scalars
+`date-released`'s), when the tagged tree link in `.zenodo.json` is stale, when
+the version's `CHANGELOG.md` heading carries a different date, or — on a tag run
+— when either file disagrees with the tag, or the release date is not **today in
+Europe/Helsinki**. That last check catches a date left at the day the release
+was prepared. A tag pushed just after midnight Finnish time still passes,
+because the check uses the Helsinki date rather than the runner's UTC date.
+`workflow_dispatch` only warns about the date, and a release re-run on a later
+day fails until the date is bumped. It reads the CFF scalars
 with anchored regexes rather than a YAML parse, deliberately: PyYAML is absent
 from a clean `setup-python` runner and this repo is stdlib-only everywhere else.
 
 To cut a release: add the `## [X.Y.Z]` section to `CHANGELOG.md`, then bump the
 version and date in **both** citation files — `version` and `date-released` in
 `CITATION.cff`; `version`, `publication_date` and the `/tree/vX.Y.Z` link in
-`.zenodo.json` — then push the tag. Versions are semver read for a dataset —
+`.zenodo.json` — then push the tag **on the day those dates name**. Versions are semver read for a dataset —
 MAJOR for a different corpus span or counting method, MINOR for added data or
 columns, PATCH for corrections.
 

@@ -7,6 +7,12 @@ reads `.zenodo.json` first and ignores `CITATION.cff` entirely when it is
 present, so nothing but this check keeps the two in step -- and a stale version
 in either one is invisible until it has already been published under a DOI.
 
+The release date is written into three places (both citation files and the
+version's CHANGELOG.md heading) before the tag exists, so it is easily left at
+the day the release was prepared rather than the day it was published. A tag run
+therefore also requires that date to be today, in RELEASE_TZ. A
+workflow_dispatch run only warns, since a dry run is expected to come first.
+
 Run with the version being released (`1.1.1`, or `v1.1.1`), or with no argument
 to run only the cross-file checks, which is what a workflow_dispatch run does.
 """
@@ -14,13 +20,28 @@ to run only the cross-file checks, which is what a workflow_dispatch run does.
 import json
 import re
 import sys
+from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 ROOT = Path(__file__).resolve().parent.parent
 ZENODO_JSON = ROOT / ".zenodo.json"
 CITATION_CFF = ROOT / "CITATION.cff"
+CHANGELOG = ROOT / "CHANGELOG.md"
 
 TREE_URL_PREFIX = "https://github.com/danradice/yle-uutiset-taajuussanakirja/tree/"
+# The runner's clock is UTC; the release is tagged in Finland, where a tag pushed
+# just after midnight would otherwise carry the previous day's UTC date.
+RELEASE_TZ = ZoneInfo("Europe/Helsinki")
+
+
+def changelog_date(version):
+    """The date in CHANGELOG.md's `## [version] - DATE` heading, or None."""
+    text = CHANGELOG.read_text(encoding="utf-8")
+    match = re.search(
+        rf"^## \[{re.escape(version)}\][ \t]*-[ \t]*(\S+)[ \t]*$", text, re.MULTILINE
+    )
+    return match.group(1) if match else None
 
 
 def cff_scalar(text, key):
@@ -113,6 +134,26 @@ def main():
                     f"but date-released is {cff_date}"
                 )
 
+    # The changelog heading restates the date too, and it is what the release
+    # notes are cut from.
+    if cff_version and cff_date:
+        heading_date = changelog_date(cff_version)
+        if heading_date and heading_date != cff_date:
+            errors.append(
+                f"CHANGELOG.md heading for {cff_version} is dated {heading_date}, "
+                f"but date-released is {cff_date}"
+            )
+
+    today = datetime.now(RELEASE_TZ).date().isoformat()
+    if cff_date and cff_date != today:
+        stale = (
+            f"release date is {cff_date}, but today is {today} ({RELEASE_TZ.key})"
+        )
+        if tag_version:
+            errors.append(stale)
+        else:
+            print(f"warning: {stale}; a tag pushed today would fail", file=sys.stderr)
+
     if tag_version:
         if cff_version and cff_version != tag_version:
             errors.append(
@@ -128,8 +169,8 @@ def main():
         for error in errors:
             print(f"  - {error}", file=sys.stderr)
         print(
-            "bump the version and date in CITATION.cff and .zenodo.json "
-            "(including the tree link) before tagging",
+            "bump the version and date in CITATION.cff, .zenodo.json "
+            "(including the tree link) and the CHANGELOG.md heading before tagging",
             file=sys.stderr,
         )
         return 1

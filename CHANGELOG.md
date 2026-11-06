@@ -14,7 +14,7 @@ numbers:
 Each released version is tagged `vX.Y.Z`, and the section below the matching
 heading is what ships as the GitHub release notes.
 
-## [2.0.0] - 2026-10-29
+## [2.0.0] - 2026-11-06
 
 A recount with repeated text removed, and a re-reviewed homonym split. **Every
 count changes**, which is why this is a major version.

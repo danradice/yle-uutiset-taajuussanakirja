@@ -254,9 +254,10 @@ Versions are semantic, read for a dataset:
 To cut a release: add the section to [`CHANGELOG.md`](CHANGELOG.md), then bump
 the version and date in **both** citation files — `version` and `date-released`
 in [`CITATION.cff`](CITATION.cff), `version`, `publication_date` and the tagged
-tree link in [`.zenodo.json`](.zenodo.json) — and tag.
+tree link in [`.zenodo.json`](.zenodo.json) — and tag on that same day.
 [`scripts/check_release_metadata.py`](scripts/check_release_metadata.py) fails
-the release if those disagree with each other or with the tag. Running the
+the release if those disagree with each other or with the tag, or if the
+release date is not the day the tag is pushed (Finnish time). Running the
 workflow via **workflow_dispatch** first exercises every gate without spending a
 tag.
 

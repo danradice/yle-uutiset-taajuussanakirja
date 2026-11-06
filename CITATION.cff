@@ -41,7 +41,7 @@ keywords:
   - Kielipankki
 license: CC-BY-4.0
 version: 2.0.0
-date-released: '2026-10-29'
+date-released: '2026-11-06'
 # Restated as the preferred citation so that the DOI, not the repository URL, is
 # the link in *every* format: only APA prefers the DOI unaided, while BibTeX
 # takes its url from repository-code unless the model is a reference. The
