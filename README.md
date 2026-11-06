@@ -28,13 +28,17 @@ että	konjunktio	2423703
 in the corpus, renders as a browsable table right here on GitHub, and needs no
 unzipping:
 
-| | Direct link | For |
-|---|---|---|
-| [`taajuussanakirja_top10000.tsv`](frequency_dicts/taajuussanakirja_top10000.tsv) | [latest release](https://github.com/danradice/yle-uutiset-taajuussanakirja/releases/latest/download/taajuussanakirja_top10000.tsv) | Scripts, text tools |
-| [`taajuussanakirja_top10000.csv`](frequency_dicts/taajuussanakirja_top10000.csv) | [latest release](https://github.com/danradice/yle-uutiset-taajuussanakirja/releases/latest/download/taajuussanakirja_top10000.csv) | Excel, Google Sheets, Anki |
+| File | For |
+|---|---|
+| [`taajuussanakirja_top10000.tsv`](frequency_dicts/taajuussanakirja_top10000.tsv) | Scripts, text tools |
+| [`taajuussanakirja_top10000.csv`](frequency_dicts/taajuussanakirja_top10000.csv) | Excel, Google Sheets, Anki |
 
-Those release links always resolve to the newest version, so they are safe to
-put on a course page and forget.
+Download both from the
+[latest release](https://github.com/danradice/yle-uutiset-taajuussanakirja/releases/latest).
+There, the filenames carry the version, e.g.
+`taajuussanakirja_top10000_v2.0.0.csv`, so a downloaded copy always shows
+which release it is. That page always shows the newest release, so its link
+is safe to put on a course page and forget.
 
 Two things to know about the list. The cutoff is **positional**: rank 10 000 has
 count 1 081 and six further rows share that count, so they fall outside the

@@ -207,9 +207,12 @@ nothing is generated at release time. GitHub's automatic source archive is the
 "everything" download, and it is also what Zenodo archives for the DOI, so the
 archived and advertised copies match.
 
-Asset filenames carry no version, so
-`…/releases/latest/download/taajuussanakirja_top10000.csv` always resolves to
-the newest release.
+The asset filenames carry the version: the workflow copies the committed
+files to `taajuussanakirja_top10000_vX.Y.Z.{tsv,csv}` just before upload, so a
+downloaded copy says which release it came from. The committed files stay
+unversioned. The cost is that no stable `…/releases/latest/download/<file>`
+URL exists, so the README links to the `releases/latest` *page* instead. Do
+not reintroduce direct asset links.
 
 ### Citation metadata
 
