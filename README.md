@@ -9,7 +9,7 @@ counted against the **Yle Finnish News Archive (YLENEWS_FI) 2011–2024**.
 
 The deliverable is
 [`frequency_dicts/taajuussanakirja_ylenews_2011_2024.tsv`](frequency_dicts/taajuussanakirja_ylenews_2011_2024.tsv):
-**87 644 attested headwords** in 87 651 rows, tab-separated, sorted by frequency
+**87 644 headwords** in 87 651 rows, tab-separated, sorted by frequency
 descending then headword. Headwords with zero corpus occurrences are dropped (the sanalista
 lists 104 742 in total).
 
@@ -24,7 +24,7 @@ että	konjunktio	2423703
 
 ## Download
 
-**Most people want the top 10 000.** It covers **95.15%** of everything counted
+**The top 10 000 frequency list.** This covers **95.15%** of everything counted
 in the corpus, renders as a browsable table right here on GitHub, and needs no
 unzipping:
 
@@ -40,7 +40,7 @@ There, the filenames carry the version, e.g.
 which release it is. That page always shows the newest release, so its link
 is safe to put on a course page and forget.
 
-Two things to know about the list. The cutoff is **positional**: rank 10 000 has
+Two things should be noted about the list. The cutoff is **positional**: rank 10 000 has
 count 1 081 and six further rows share that count, so they fall outside the
 list despite being no less frequent. And it is 10 000 *rows*, which is 9 993
 distinct lemmas — 7 words appear twice because the homonym split gives them one
@@ -54,8 +54,8 @@ the build scripts and the intermediate counts — 2.4 MB compressed.
 ### File formats
 
 Every `.tsv` here is UTF-8 with **LF** line endings and needs no quoting: no
-field contains a tab, so splitting on `\t` is always correct. The `.csv` is the
-single exception — UTF-8 **with a BOM** and **CRLF** endings, as RFC 4180
+field contains a tab, so splitting on `\t` is always correct. The `.csv` is
+formatted differently — UTF-8 **with a BOM** and **CRLF** endings, as RFC 4180
 specifies and Excel expects, with the 435 comma-bearing `Sanaluokat` values
 quoted. If you are scripting, prefer the TSV.
 
@@ -64,13 +64,13 @@ quoted. If you are scripting, prefer the TSV.
 | Column | Meaning |
 |---|---|
 | `Hakusana` | The headword / lemma, exactly as the sanalista spells it. |
-| `Sanaluokat` | The word class(es) the **sanalista** assigns to the lemma — not the corpus tagger's guess. Comma-separated, deduped, in first-appearance order. May be empty for the handful of forms the sanalista lists without a class. |
-| `count` | Corpus occurrences of the lemma, with repeated text counted once — see [What was counted](#what-was-counted). |
+| `Sanaluokat` | The word class(es) the **sanalista** assigns to the lemma — not the corpus tagger's guess. They are comma-separated, in first-appearance order, and may be empty for the handful of forms the sanalista lists without a class. |
+| `count` | Corpus occurrences of the lemma, with certain repeated text counted only once — see [What was counted](#what-was-counted). |
 
 **The asterisk in `Sanaluokat`** marks a class carried by *more than one sense* —
 the lemma has several distinct meanings of that same part of speech. `joka`
 → `pronomini*` is two different pronouns. A multi-valued entry like
-`substantiivi, adjektiivi` is one sense wearing two hats and gets no asterisk.
+`substantiivi, adjektiivi` is one sense that can function as two different classes and gets no asterisk.
 
 **Counts are POS-merged by default.** A lemma's `count` is every corpus token of
 that lemma regardless of how the tagger classified it — see
@@ -78,28 +78,21 @@ that lemma regardless of how the tagger classified it — see
 are genuinely different parts of speech and whose second sense is frequent
 enough to make the top 10 000 on its own (`aika`, `päästä`, `koko`, `juuri`,
 `kuusi`, `kohta`, `panna`). They were split by hand and appear as one row per
-class:
-
-```
-panna	verbi	18570
-panna	substantiivi	1554
-```
+class.
 
 ## What was counted
 
-The news archive repeats a great deal of text, so since 2.0.0 **each distinct
-sentence is counted once**:
+To deal with repeated sentences and otherwise improve the accuracy and utility of the frequency dictionary, the following rules were applied since version 2.0.0:
 
 - **Excluded entirely:** image alt texts, texts written by Yle's Voitto sports
   robot, and Yle Selkouutiset (news in simplified Finnish).
-- **Dropped as repeats:**
+- **Dropped as repeats:** all repeated sentences except for short sentences of up to four words that people genuinely write again and
+  again ("Päinvastoin.", "En tiedä.", "Kukaan ei loukkaantunut."). Dropped sentences include: 
   - copies of the headline, lead and caption that the archive stores twice
     within an article;
   - navigation and promotion lines ("Lue myös", "Kuvituskuva");
   - templates that differ only in their numbers, such as comment-moderation
     footers and programme schedules.
-- **Kept every time:** short sentences that people genuinely write again and
-  again ("Päinvastoin.", "En tiedä.", "Kukaan ei loukkaantunut.").
 
 This keeps 81.9% of the archive's 296.6 M word tokens. The method resembles
 the Leipzig Corpora Collection's sentence deduplication, but it keeps genuine
@@ -108,7 +101,7 @@ short repeats and masks numbers only for reviewed templates.
 ## Word-class subdictionaries
 
 [`frequency_dicts/subdictionaries/`](frequency_dicts/subdictionaries/) holds the
-same data split into one file per word class, same three columns, same ordering.
+same data, but split into one file per word class. Each has the same three columns and same ordering.
 
 | File | Rows | | File | Rows |
 |---|---:|---|---|---:|
@@ -158,15 +151,10 @@ The scripts, by what they need:
 |---|---|---|---|
 | `list_boilerplate_candidates.py`, `count_lemmas.py` | `build_dictionary.py`, `build_pos_subdictionaries.py`, `build_top_list.py` | `vrt_sentences.py` (corpus reading and repetition rules), `sanalista.py` (wordlist and word classes) | `check_release_metadata.py` |
 
-> [!IMPORTANT]
-> Stage 2 is **not idempotent on its own output**. It always rebuilds from
-> `auxiliary_data/lemma_counts_merged_2011_2024.tsv`, because an already-split
-> lemma no longer has the single merged row it needs to replace.
-
 ### Stage 1 needs the corpora
 
 Recounting from scratch requires the three VRT packages (~27 GB), which are
-**not** in this repo. Download them from Kielipankki and unpack into `corpora/`:
+not in this repo. Download them from Kielipankki and unpack into `corpora/`:
 
 | Package | PID |
 |---|---|

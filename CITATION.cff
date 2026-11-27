@@ -40,8 +40,8 @@ keywords:
   - nykysuomen sanalista
   - Kielipankki
 license: CC-BY-4.0
-version: 2.0.0
-date-released: '2026-11-06'
+version: 2.0.1
+date-released: '2026-11-27'
 # Restated as the preferred citation so that the DOI, not the repository URL, is
 # the link in *every* format: only APA prefers the DOI unaided, while BibTeX
 # takes its url from repository-code unless the model is a reference. The
@@ -59,7 +59,7 @@ preferred-citation:
       affiliation: University of Helsinki
       orcid: 'https://orcid.org/0009-0002-5206-6880'
   year: 2026
-  version: 2.0.0
+  version: 2.0.1
   publisher:
     name: Zenodo
   doi: 10.5281/zenodo.22162057

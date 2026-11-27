@@ -14,6 +14,20 @@ numbers:
 Each released version is tagged `vX.Y.Z`, and the section below the matching
 heading is what ships as the GitHub release notes.
 
+## [2.0.1] - 2026-11-27
+
+Documentation and record description only. **No dictionary data changed**:
+every file under `frequency_dicts/` is byte-identical to 2.0.0.
+
+### Changed
+
+- The description of what was counted, in `README.md` and in the Zenodo record,
+  no longer says that each distinct sentence is counted once. Short sentences
+  that genuinely recur ("Päinvastoin.", "En tiedä.") count every time, so the
+  text now states that rule alongside the one-copy rule for other repeats,
+  boilerplate and number templates.
+- The README has been edited for improved clarity and simplicity. "Attested headwords" is now simply "headwords", for example, and the note on rebuilding stage 2 has been removed.
+
 ## [2.0.0] - 2026-11-06
 
 A recount with repeated text removed, and a re-reviewed homonym split. **Every
